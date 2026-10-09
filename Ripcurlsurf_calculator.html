@@ -1,0 +1,1683 @@
+<title>Kepler SC-9 Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: a graphite instrument on the left (sticky on desktop), a workbench of tool panels on the right; stacks on phones. */
+:root{
+  --page:#dde2e5; --panel:#f6f8f9; --field:#ffffff; --ink:#1a1e23; --muted:#5a6570; --line:#c6cdd3; --line-2:#e3e8eb;
+  --accent:#1c6994; --accent-soft:#dcebf3; --on-accent:#ffffff; --bad:#a63a2b; --good:#2c7049;
+  --shell:#2a2d33; --shell-2:#363a41; --shell-ink:#b9c0c7; --k-edge:#16181b;
+  --k-fn:#3f444c; --k-num:#5d636d; --k-op:#4b5059; --k-ink:#f2f4f6; --k-ink-dim:#a3a9b0;
+  --gold:#e3aa3c; --gold-on:#2a1b00; --eq:#d07f2f; --eq-on:#211002; --clr:#a8473a;
+  --lcd:#c2ccb8; --lcd-ink:#1a2116; --lcd-dim:#6f7a67; --lcd-err:#8c2a1c;
+  --g1:#1c6994; --g2:#c0661a; --g3:#a3376a; --grid:#dde3e7; --grid-2:#c9d1d7; --axis:#56616b; --plot:#ffffff;
+  --f-ui:'Barlow Semi Condensed','Arial Narrow','Helvetica Neue',Arial,sans-serif;
+  --f-num:'IBM Plex Mono',ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --page:#111316; --panel:#1a1d21; --field:#121418; --ink:#e5e8eb; --muted:#939ba4; --line:#2e333a; --line-2:#24282e;
+  --accent:#6db0d9; --accent-soft:#1d3240; --on-accent:#0b1a24; --bad:#e2735f; --good:#6cc093;
+  --shell:#25282d; --shell-2:#30343a; --shell-ink:#a9b0b8; --k-edge:#0c0d0f;
+  --k-fn:#363a41; --k-num:#4b5059; --k-op:#3f444c; --k-ink:#eef0f2; --k-ink-dim:#8d939a;
+  --gold:#e8b24c; --gold-on:#241700; --eq:#d58a3d; --eq-on:#1d0e01; --clr:#ad4f41;
+  --lcd:#0f1411; --lcd-ink:#cfe0c4; --lcd-dim:#5e6e57; --lcd-err:#ef8a76;
+  --g1:#6db0d9; --g2:#e39a4f; --g3:#d77aa6; --grid:#22262b; --grid-2:#2e343a; --axis:#8a949e; --plot:#141619;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --page:#111316; --panel:#1a1d21; --field:#121418; --ink:#e5e8eb; --muted:#939ba4; --line:#2e333a; --line-2:#24282e;
+  --accent:#6db0d9; --accent-soft:#1d3240; --on-accent:#0b1a24; --bad:#e2735f; --good:#6cc093;
+  --shell:#25282d; --shell-2:#30343a; --shell-ink:#a9b0b8; --k-edge:#0c0d0f;
+  --k-fn:#363a41; --k-num:#4b5059; --k-op:#3f444c; --k-ink:#eef0f2; --k-ink-dim:#8d939a;
+  --gold:#e8b24c; --gold-on:#241700; --eq:#d58a3d; --eq-on:#1d0e01; --clr:#ad4f41;
+  --lcd:#0f1411; --lcd-ink:#cfe0c4; --lcd-dim:#5e6e57; --lcd-err:#ef8a76;
+  --g1:#6db0d9; --g2:#e39a4f; --g3:#d77aa6; --grid:#22262b; --grid-2:#2e343a; --axis:#8a949e; --plot:#141619;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--page);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.45}
+.wrap{max-width:1220px;margin:0 auto;padding-inline:16px;padding-block:22px 40px}
+.top{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin-bottom:18px}
+.top h1{font:700 26px/1.1 var(--f-ui);letter-spacing:.01em;margin:0;text-wrap:balance}
+.top p{margin:0;color:var(--muted);max-width:64ch}
+.app{display:grid;grid-template-columns:minmax(0,412px) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:900px){.app{grid-template-columns:minmax(0,1fr)} .calc{max-width:470px;width:100%;margin-inline:auto;position:static!important}}
+
+/* ---------- Instrument ---------- */
+.calc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 14px);background:var(--shell);border-radius:22px;padding:14px 14px 18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 22px 44px -24px rgba(8,12,18,.6)}
+.face{display:flex;justify-content:space-between;align-items:baseline;padding:0 4px 9px;color:var(--shell-ink)}
+.brand{font:700 13px var(--f-ui);letter-spacing:.32em}
+.model{font:500 10.5px var(--f-ui);letter-spacing:.14em;text-transform:uppercase;opacity:.8}
+.lcd{background:var(--lcd);color:var(--lcd-ink);border:3px solid var(--k-edge);border-radius:11px;padding:7px 11px 9px;box-shadow:inset 0 2px 7px rgba(0,0,0,.28)}
+.ann{display:flex;gap:10px;font:600 10px var(--f-ui);letter-spacing:.1em;text-transform:uppercase;color:var(--lcd-dim);min-height:14px}
+.ann span{opacity:.28}
+.ann span.on{opacity:1;color:var(--lcd-ink)}
+.ann .sp{flex:1;opacity:0}
+#expr{display:block;width:100%;background:transparent;border:0;outline:0;padding:5px 0 3px;font:500 17px/1.3 var(--f-num);color:var(--lcd-ink);caret-color:var(--lcd-ink)}
+#expr::placeholder{color:var(--lcd-dim)}
+.resrow{display:flex;align-items:flex-end;gap:8px;min-height:44px}
+.res{flex:1;min-width:0;text-align:right;white-space:nowrap;overflow-x:auto;overflow-y:hidden;font:500 31px/1.25 var(--f-num);font-variant-numeric:tabular-nums;scrollbar-width:none}
+.res::-webkit-scrollbar{display:none}
+.res.preview{color:var(--lcd-dim)}
+.res.err{color:var(--lcd-err);font:500 14px/1.3 var(--f-num);white-space:normal;padding-bottom:6px}
+.res .x10{font-size:.62em;margin-left:.12em}
+.res sup{font-size:.85em;vertical-align:.7em}
+.copy{flex:none;border:1px solid var(--lcd-dim);background:transparent;color:var(--lcd-dim);font:600 10px var(--f-ui);letter-spacing:.1em;text-transform:uppercase;border-radius:4px;padding:2px 6px;margin-bottom:6px;cursor:pointer}
+.copy:hover{color:var(--lcd-ink);border-color:var(--lcd-ink)}
+
+.modes{display:flex;flex-wrap:wrap;gap:6px;margin:11px 0 8px}
+.seg{display:inline-flex;align-items:center;background:var(--k-edge);border-radius:7px;padding:2px}
+.seg button,.seg span{font:600 11px var(--f-ui);letter-spacing:.08em;color:var(--shell-ink);background:transparent;border:0;padding:4px 7px;border-radius:5px;cursor:pointer}
+.seg span{cursor:default;min-width:3.6em;text-align:center}
+.seg button[aria-pressed="true"]{background:var(--shell-2);color:var(--gold)}
+.seg button:hover{color:var(--k-ink)}
+.seg.dim span{opacity:.45}
+
+.mem{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin-bottom:10px}
+.mem button{height:25px;border:0;border-radius:6px;background:var(--shell-2);color:var(--shell-ink);font:600 11.5px var(--f-ui);letter-spacing:.06em;cursor:pointer;box-shadow:0 1px 0 var(--k-edge)}
+.mem button:hover{color:var(--k-ink)}
+
+.pad{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));column-gap:7px;row-gap:3px}
+.key{display:flex;flex-direction:column;min-width:0}
+.key .alt{font:600 10.5px/14px var(--f-ui);height:14px;color:var(--gold);text-align:center;white-space:nowrap;overflow:hidden;opacity:.78;transition:opacity .12s}
+.key button{height:37px;border:0;border-radius:8px;background:var(--k-fn);color:var(--k-ink);font:500 15px var(--f-ui);cursor:pointer;box-shadow:0 2px 0 var(--k-edge),inset 0 1px 0 rgba(255,255,255,.08);transition:transform .05s,box-shadow .05s,color .12s;touch-action:manipulation;padding:0 2px;white-space:nowrap;overflow:hidden}
+.key button:active{transform:translateY(1px);box-shadow:0 1px 0 var(--k-edge),inset 0 1px 0 rgba(255,255,255,.05)}
+.key.num button{background:var(--k-num);height:45px;font:500 20px var(--f-num)}
+.key.op button{background:var(--k-op);height:45px;font-size:21px}
+.key.eq button{background:var(--eq);color:var(--eq-on);height:45px;font:600 22px var(--f-ui)}
+.key.clr button{background:var(--clr);height:45px;font-weight:600;letter-spacing:.04em}
+.key.shift button{background:var(--gold);color:var(--gold-on);font-weight:700;letter-spacing:.04em}
+.key.wide{grid-column:span 2}
+.key.on button{outline:2px solid var(--gold);outline-offset:-2px}
+.calc.shifted .key .alt{opacity:1;text-shadow:0 0 10px rgba(227,170,60,.45)}
+.calc.shifted .key:not(.shift) button{color:var(--k-ink-dim)}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.flash{animation:flash .35s}
+@keyframes flash{0%{filter:brightness(1.25)}100%{filter:none}}
+
+/* ---------- Workbench ---------- */
+.bench{background:var(--panel);border:1px solid var(--line);border-radius:14px;min-width:0}
+.tabs{display:flex;gap:2px;overflow-x:auto;border-bottom:1px solid var(--line);padding:4px 10px 0;scrollbar-width:thin}
+.tabs button{font:600 13px var(--f-ui);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);background:none;border:0;border-bottom:2px solid transparent;padding:11px 10px 9px;white-space:nowrap;cursor:pointer}
+.tabs button:hover{color:var(--ink)}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.pane{padding:18px 20px 24px;min-width:0}
+.ph{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px}
+h2{font:700 21px/1.2 var(--f-ui);margin:0;text-wrap:balance}
+h3{font:600 16px/1.25 var(--f-ui);margin:0 0 8px;letter-spacing:.01em}
+.sub{color:var(--muted);margin:4px 0 14px;max-width:68ch}
+.hint{color:var(--muted);font-size:13.5px;margin:6px 0 10px}
+code,.mono{font-family:var(--f-num);font-size:.92em}
+.card{border-top:1px solid var(--line);padding-block:16px 18px}
+.card:first-of-type{border-top:0;padding-top:4px}
+.lab{display:block;font:600 11px var(--f-ui);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 4px}
+.in,select.in,textarea.in{width:100%;min-width:0;background:var(--field);color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:8px 10px;font:15px/1.35 var(--f-num)}
+textarea.in{resize:vertical;min-height:96px}
+select.in{font-family:var(--f-ui);font-size:15px}
+.frow{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:6px 10px;margin-bottom:8px}
+.frow > label{font:500 14px var(--f-num);color:var(--muted);white-space:nowrap}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{background:var(--accent);color:var(--on-accent);border:0;border-radius:7px;padding:8px 14px;font:600 14px var(--f-ui);letter-spacing:.03em;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn.sm{padding:5px 10px;font-size:13px}
+.seg2{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg2 button{background:transparent;border:0;border-right:1px solid var(--line);color:var(--muted);font:600 13px var(--f-ui);letter-spacing:.06em;padding:6px 11px;cursor:pointer}
+.seg2 button:last-child{border-right:0}
+.seg2 button[aria-pressed="true"]{background:var(--accent-soft);color:var(--ink)}
+.out{font-family:var(--f-num);font-variant-numeric:tabular-nums;margin-top:8px;min-width:0;overflow-x:auto}
+.big{font:500 24px/1.3 var(--f-num);font-variant-numeric:tabular-nums}
+.out sup,.kv sup,.ctab sup,.hist sup{font-size:.75em;vertical-align:.5em}
+.err-t{color:var(--bad);font-family:var(--f-num);font-size:13.5px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:500 13.5px var(--f-num);background:var(--accent-soft);color:var(--ink);border:0;border-radius:6px;padding:4px 9px;cursor:pointer;max-width:100%;overflow-wrap:anywhere;text-align:left}
+.chip:hover{outline:1px solid var(--accent)}
+.chip small{color:var(--muted);font-family:var(--f-ui);font-size:12px;margin-right:4px}
+.kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1px;background:var(--line-2);border:1px solid var(--line-2);border-radius:9px;overflow:hidden;margin-top:12px}
+.kv div{background:var(--panel);padding:8px 11px;min-width:0}
+.kv dt{font:600 11px var(--f-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.kv dd{margin:2px 0 0;font:500 15px var(--f-num);font-variant-numeric:tabular-nums;overflow-wrap:anywhere;cursor:pointer}
+.kv dd:hover{color:var(--accent)}
+.empty{color:var(--muted)}
+
+/* history */
+.hist{list-style:none;margin:0 0 18px;padding:0;border-top:1px solid var(--line-2)}
+.hist li{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 14px;border-bottom:1px solid var(--line-2);padding:7px 2px}
+.hist button{background:none;border:0;padding:2px 0;font-family:var(--f-num);color:inherit;cursor:pointer;text-align:left;min-width:0;overflow-wrap:anywhere}
+.hist .he{color:var(--muted);font-size:14px}
+.hist .hv{font-size:16px;font-weight:500;margin-left:auto;text-align:right}
+.hist button:hover{color:var(--accent)}
+
+/* graph */
+.fnrow{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;align-items:center;margin-bottom:7px}
+.fnlab{display:flex;align-items:center;gap:7px;font:500 14px var(--f-num);color:var(--muted);white-space:nowrap}
+.sw{width:14px;height:4px;border-radius:2px;background:var(--c)}
+.ferr{grid-column:2;color:var(--bad);font:12.5px var(--f-num)}
+.ferr:empty{display:none}
+.gbox{position:relative;margin-top:10px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--plot)}
+#gcv{display:block;width:100%;touch-action:none;cursor:crosshair}
+.readout{font:13px var(--f-num);color:var(--muted);margin-top:8px;min-height:20px;overflow-wrap:anywhere}
+.ganal{margin-top:10px;display:grid;gap:8px}
+.ganal .row b{font:600 12px var(--f-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);min-width:7.5em}
+
+/* stats */
+.svgbox{margin-top:14px;border:1px solid var(--line-2);border-radius:9px;padding:8px;background:var(--plot);overflow-x:auto}
+.svgbox svg{display:block;width:100%;height:auto;min-width:300px}
+
+/* linear system */
+.mat{display:grid;gap:6px;overflow-x:auto;padding-bottom:4px}
+.mat .in{padding:6px 7px;text-align:right;min-width:3.6em}
+.mat .bar{border-left:2px solid var(--line);padding-left:6px}
+.mat .vh{font:500 12px var(--f-num);color:var(--muted);text-align:center}
+
+/* converter */
+.convgrid{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:end}
+@media (max-width:520px){.convgrid{grid-template-columns:minmax(0,1fr)} .swap{justify-self:start}}
+.ctab{width:100%;border-collapse:collapse;margin-top:14px;font-variant-numeric:tabular-nums}
+.ctab td{border-top:1px solid var(--line-2);padding:6px 4px;vertical-align:top}
+.ctab td:first-child{color:var(--muted);width:42%}
+.ctab td:last-child{font-family:var(--f-num);text-align:right;overflow-wrap:anywhere}
+.ctab tr.cur td{color:var(--accent);font-weight:600}
+.tbl{overflow-x:auto}
+
+/* base */
+.bases{display:grid;gap:1px;background:var(--line-2);border:1px solid var(--line-2);border-radius:9px;overflow:hidden;margin:12px 0}
+.bases div{display:grid;grid-template-columns:3.4em minmax(0,1fr);gap:10px;background:var(--panel);padding:7px 11px;align-items:baseline}
+.bases b{font:600 11px var(--f-ui);letter-spacing:.1em;color:var(--muted)}
+.bases span{font:500 15px var(--f-num);overflow-wrap:anywhere}
+.bits{display:grid;gap:8px;margin:8px 0 16px;overflow-x:auto}
+.bitrow{display:flex;align-items:center;gap:8px}
+.bitrow > small{font:12px var(--f-num);color:var(--muted);width:2.2em;text-align:right;flex:none}
+.nib{display:flex;gap:2px}
+.nibs{display:flex;gap:7px;flex-wrap:nowrap}
+.bit{width:19px;height:25px;border:1px solid var(--line);border-radius:4px;background:var(--field);color:var(--muted);font:500 12px var(--f-num);cursor:pointer;padding:0}
+.bit.one{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.opgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:6px;margin-top:10px}
+.opgrid button{font:600 13px var(--f-num)}
+.check{display:inline-flex;gap:6px;align-items:center;color:var(--muted);font-size:14px}
+
+/* constants & guide */
+.const{width:100%;border-collapse:collapse}
+.const th{font:600 11px var(--f-ui);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 6px;border-bottom:1px solid var(--line)}
+.const td{padding:8px 6px;border-bottom:1px solid var(--line-2);vertical-align:baseline}
+.const td.sym{font:500 16px var(--f-num);white-space:nowrap}
+.const td.val{font:500 14px var(--f-num);white-space:nowrap}
+.const td.unit{font:13px var(--f-num);color:var(--muted);white-space:nowrap}
+.const tr.ex td.val::after{content:" exact";font:600 10px var(--f-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--good);margin-left:4px}
+.guide dl{display:grid;grid-template-columns:minmax(0,14em) minmax(0,1fr);gap:8px 18px;margin:8px 0 20px}
+.guide dt{font:500 14px var(--f-num)}
+.guide dd{margin:0;color:var(--muted)}
+@media (max-width:560px){.guide dl{grid-template-columns:minmax(0,1fr)} .guide dd{margin-bottom:6px}}
+kbd{font:500 12px var(--f-num);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;background:var(--field)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Kepler SC-9</h1>
+    <p>Scientific calculator with graphing, equation solving, calculus, statistics, unit and base conversion.</p>
+  </header>
+
+  <main class="app">
+    <section class="calc" id="calc" aria-label="Calculator">
+      <div class="face"><span class="brand">KEPLER</span><span class="model">SC-9 · two-line algebraic</span></div>
+      <div class="lcd" id="lcd">
+        <div class="ann" aria-hidden="true">
+          <span id="a-2nd">2nd</span><span id="a-more">ƒ</span><span id="a-m">M</span><span class="sp">.</span><span id="a-ang" class="on">DEG</span><span id="a-fmt" class="on">NORM</span>
+        </div>
+        <input id="expr" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Expression" placeholder="Type or tap an expression" value="2sin(30°) + √16">
+        <div class="resrow">
+          <button class="copy" id="copy" type="button">Copy</button>
+          <div class="res preview" id="res" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <div class="modes">
+        <div class="seg" role="group" aria-label="Angle unit" id="seg-ang">
+          <button type="button" data-v="DEG">DEG</button><button type="button" data-v="RAD">RAD</button><button type="button" data-v="GRAD">GRAD</button>
+        </div>
+        <div class="seg" role="group" aria-label="Number format" id="seg-fmt">
+          <button type="button" data-v="NORM">NORM</button><button type="button" data-v="FIX">FIX</button><button type="button" data-v="SCI">SCI</button><button type="button" data-v="ENG">ENG</button>
+        </div>
+        <div class="seg" role="group" aria-label="Decimal places" id="seg-dig">
+          <button type="button" data-d="-1" aria-label="Fewer decimal places">−</button><span id="dig">4 dp</span><button type="button" data-d="1" aria-label="More decimal places">+</button>
+        </div>
+        <div class="seg"><button type="button" id="grp" aria-label="Digit grouping">1 000</button></div>
+      </div>
+
+      <div class="mem" id="mem">
+        <button type="button" data-m="mc" title="Clear memory">MC</button>
+        <button type="button" data-m="mr" title="Recall memory">MR</button>
+        <button type="button" data-m="mplus" title="Add to memory">M+</button>
+        <button type="button" data-m="mminus" title="Subtract from memory">M−</button>
+        <button type="button" data-m="ms" title="Store in memory">MS</button>
+      </div>
+
+      <div class="pad" id="pad"></div>
+    </section>
+
+    <section class="bench" aria-label="Tools">
+      <div class="tabs" role="tablist" id="tabs">
+        <button role="tab" data-tab="history">History</button>
+        <button role="tab" data-tab="graph">Graph</button>
+        <button role="tab" data-tab="solve">Solve</button>
+        <button role="tab" data-tab="calculus">Calculus</button>
+        <button role="tab" data-tab="stats">Statistics</button>
+        <button role="tab" data-tab="convert">Units</button>
+        <button role="tab" data-tab="base">Base-N</button>
+        <button role="tab" data-tab="const">Constants</button>
+        <button role="tab" data-tab="guide">Guide</button>
+      </div>
+
+      <!-- HISTORY -->
+      <div class="pane" id="p-history" role="tabpanel">
+        <div class="ph"><h2>History</h2><button type="button" class="btn ghost sm" id="hist-clear">Clear history</button></div>
+        <p class="hint">Tap an expression to edit it again, or a result to insert it at the cursor. <kbd>↑</kbd> in the display steps back through past entries.</p>
+        <ol class="hist" id="hist"></ol>
+        <div id="hist-empty" class="empty">
+          <p>Nothing calculated yet. Tap an example to load it, then press <kbd>=</kbd>.</p>
+          <div class="chips" id="examples"></div>
+        </div>
+        <h3 style="margin-top:18px">Stored values</h3>
+        <p class="hint">Assign with <code>r = 4</code>, then use <code>r</code> in any expression. Tap a name to insert it.</p>
+        <div class="chips" id="vars"></div>
+      </div>
+
+      <!-- GRAPH -->
+      <div class="pane" id="p-graph" role="tabpanel" hidden>
+        <div class="ph">
+          <h2>Graph</h2>
+          <div class="row">
+            <button type="button" class="btn ghost sm" id="gz-in" aria-label="Zoom in">Zoom +</button>
+            <button type="button" class="btn ghost sm" id="gz-out" aria-label="Zoom out">Zoom −</button>
+            <button type="button" class="btn ghost sm" id="gz-reset">Reset view</button>
+          </div>
+        </div>
+        <p class="sub">Plot up to three functions of <code>x</code>. Trig functions use radians here.</p>
+        <div class="fnrow"><label class="fnlab" for="g0"><span class="sw" style="--c:var(--g1)"></span>f₁(x) =</label><input class="in" id="g0" spellcheck="false" autocomplete="off"><span class="ferr" id="gerr0"></span></div>
+        <div class="fnrow"><label class="fnlab" for="g1"><span class="sw" style="--c:var(--g2)"></span>f₂(x) =</label><input class="in" id="g1" spellcheck="false" autocomplete="off"><span class="ferr" id="gerr1"></span></div>
+        <div class="fnrow"><label class="fnlab" for="g2"><span class="sw" style="--c:var(--g3)"></span>f₃(x) =</label><input class="in" id="g2" spellcheck="false" autocomplete="off" placeholder="optional, e.g. ln(x)"><span class="ferr" id="gerr2"></span></div>
+        <div class="gbox" id="gbox"><canvas id="gcv" aria-label="Function plot"></canvas></div>
+        <div class="readout" id="gread">Drag to pan · scroll or pinch to zoom · hover to trace</div>
+        <div class="ganal" id="ganal"></div>
+      </div>
+
+      <!-- SOLVE -->
+      <div class="pane" id="p-solve" role="tabpanel" hidden>
+        <h2>Solve</h2>
+        <p class="sub">Every field accepts expressions such as <code>π/4</code> or <code>√2</code>. Trig functions use radians. Tap any answer to send it to the calculator.</p>
+        <section class="card">
+          <h3>Equation in x</h3>
+          <div class="frow"><label for="eq-f">equation</label><input class="in" id="eq-f" value="x^3 - 6x^2 + 11x = 6" spellcheck="false"></div>
+          <div class="grid3">
+            <div><label class="lab" for="eq-a">Search from</label><input class="in" id="eq-a" value="-100"></div>
+            <div><label class="lab" for="eq-b">to</label><input class="in" id="eq-b" value="100"></div>
+          </div>
+          <div class="out" id="eq-out"></div>
+        </section>
+        <section class="card">
+          <h3>Polynomial roots, real and complex</h3>
+          <div class="frow"><label for="po-c">coefficients</label><input class="in" id="po-c" value="1, -2, 5, -4" spellcheck="false"></div>
+          <p class="hint" id="po-show"></p>
+          <div class="out" id="po-out"></div>
+        </section>
+        <section class="card">
+          <h3>Linear system</h3>
+          <div class="row" style="margin-bottom:10px">
+            <span class="lab" style="margin:0">Unknowns</span>
+            <div class="seg2" id="ls-n"><button type="button" data-n="2">2</button><button type="button" data-n="3">3</button><button type="button" data-n="4">4</button></div>
+          </div>
+          <div class="mat" id="ls-grid"></div>
+          <div class="out" id="ls-out"></div>
+        </section>
+      </div>
+
+      <!-- CALCULUS -->
+      <div class="pane" id="p-calculus" role="tabpanel" hidden>
+        <h2>Calculus</h2>
+        <p class="sub">Numerical methods with trig in radians: five-point differences for derivatives, adaptive Simpson's rule for integrals.</p>
+        <section class="card">
+          <h3>Derivative</h3>
+          <div class="frow"><label for="d-f">f(x) =</label><input class="in" id="d-f" value="x^3 sin(x)" spellcheck="false"></div>
+          <div class="frow"><label for="d-a">at x =</label><input class="in" id="d-a" value="π/4"></div>
+          <div class="out" id="d-out"></div>
+        </section>
+        <section class="card">
+          <h3>Definite integral</h3>
+          <div class="frow"><label for="i-f">f(x) =</label><input class="in" id="i-f" value="e^(-x^2)" spellcheck="false"></div>
+          <div class="grid3">
+            <div><label class="lab" for="i-a">Lower limit a</label><input class="in" id="i-a" value="-2"></div>
+            <div><label class="lab" for="i-b">Upper limit b</label><input class="in" id="i-b" value="2"></div>
+          </div>
+          <div class="out" id="i-out"></div>
+        </section>
+        <section class="card">
+          <h3>Series</h3>
+          <div class="row" style="margin-bottom:10px"><div class="seg2" id="s-kind"><button type="button" data-k="sum">Σ sum</button><button type="button" data-k="prod">Π product</button></div></div>
+          <div class="frow"><label for="s-f">term(n) =</label><input class="in" id="s-f" value="1/n^2" spellcheck="false"></div>
+          <div class="grid3">
+            <div><label class="lab" for="s-a">n from</label><input class="in" id="s-a" value="1"></div>
+            <div><label class="lab" for="s-b">to</label><input class="in" id="s-b" value="1000"></div>
+          </div>
+          <div class="out" id="s-out"></div>
+        </section>
+      </div>
+
+      <!-- STATS -->
+      <div class="pane" id="p-stats" role="tabpanel" hidden>
+        <div class="ph"><h2>Statistics</h2><div class="seg2" id="st-mode"><button type="button" data-m="1">One variable</button><button type="button" data-m="2">Two variable</button></div></div>
+        <p class="sub" id="st-sub"></p>
+        <textarea class="in" id="st-data" spellcheck="false" aria-label="Data"></textarea>
+        <div id="st-err" class="err-t"></div>
+        <div id="st-pred" class="frow" style="margin-top:12px" hidden><label for="st-x">predict ŷ at x =</label><input class="in" id="st-x" value="8"></div>
+        <dl class="kv" id="st-out"></dl>
+        <div class="svgbox" id="st-plot"></div>
+      </div>
+
+      <!-- CONVERT -->
+      <div class="pane" id="p-convert" role="tabpanel" hidden>
+        <h2>Unit converter</h2>
+        <p class="sub">Exact SI definitions where they exist. The value field accepts expressions.</p>
+        <div class="grid3" style="margin-bottom:12px">
+          <div><label class="lab" for="cv-cat">Quantity</label><select class="in" id="cv-cat"></select></div>
+          <div><label class="lab" for="cv-v">Value</label><input class="in" id="cv-v" value="26.2"></div>
+        </div>
+        <div class="convgrid">
+          <div><label class="lab" for="cv-from">From</label><select class="in" id="cv-from"></select></div>
+          <button type="button" class="btn ghost swap" id="cv-swap" aria-label="Swap units">⇄</button>
+          <div><label class="lab" for="cv-to">To</label><select class="in" id="cv-to"></select></div>
+        </div>
+        <div class="out big" id="cv-out" style="margin-top:14px"></div>
+        <div class="tbl"><table class="ctab" id="cv-all"></table></div>
+      </div>
+
+      <!-- BASE -->
+      <div class="pane" id="p-base" role="tabpanel" hidden>
+        <h2>Base-N and bitwise</h2>
+        <p class="sub">Integers stored in two's complement at the chosen word size. Type in any base, or tap bits to flip them.</p>
+        <div class="row" style="margin-bottom:12px">
+          <div class="seg2" id="b-base"><button type="button" data-b="16">HEX</button><button type="button" data-b="10">DEC</button><button type="button" data-b="8">OCT</button><button type="button" data-b="2">BIN</button></div>
+          <select class="in" id="b-w" style="width:auto" aria-label="Word size"><option value="8">8-bit</option><option value="16">16-bit</option><option value="32" selected>32-bit</option><option value="64">64-bit</option></select>
+          <label class="check"><input type="checkbox" id="b-signed" checked> Signed</label>
+        </div>
+        <label class="lab" for="b-a">Value A</label>
+        <input class="in" id="b-a" spellcheck="false" autocomplete="off">
+        <div class="err-t" id="b-err"></div>
+        <div class="bases" id="b-out"></div>
+        <div class="bits" id="b-bits"></div>
+        <h3>Operate on A</h3>
+        <div class="frow"><label for="b-b">B =</label><input class="in" id="b-b" value="F0" spellcheck="false" autocomplete="off"></div>
+        <div class="opgrid" id="b-ops"></div>
+        <p class="hint" id="b-msg">Results replace A. B is read in the same base as A.</p>
+      </div>
+
+      <!-- CONSTANTS -->
+      <div class="pane" id="p-const" role="tabpanel" hidden>
+        <h2>Constants</h2>
+        <p class="sub">CODATA 2018 recommended values in SI units. Tap a row to insert the value into the calculator.</p>
+        <div class="tbl"><table class="const" id="ctab"></table></div>
+      </div>
+
+      <!-- GUIDE -->
+      <div class="pane guide" id="p-guide" role="tabpanel" hidden>
+        <h2>Guide</h2>
+        <p class="sub">The display is a text field. Type directly, tap keys, or mix both. Keys marked in gold above a key are its 2nd function: press <b>2nd</b>, then the key.</p>
+        <h3>Syntax</h3>
+        <dl>
+          <dt>2π, 3(4+1), 2sin 30</dt><dd>Implicit multiplication. It binds tighter than ÷, so 1/2π equals 1/(2π).</dd>
+          <dt>−2² = −4</dt><dd>Powers bind before a leading minus. Powers chain right to left: 2^3^2 = 2^9.</dd>
+          <dt>6.022E23</dt><dd>Scientific notation from the EXP key, or type e/E.</dd>
+          <dt>sin(30°)</dt><dd>The ° mark reads the value as degrees in any angle mode.</dd>
+          <dt>r = 4</dt><dd>Stores a variable. Ans holds the last result; M holds memory.</dd>
+          <dt>log(x, b), root(x, n)</dt><dd>Logarithm in base b, and the n-th root.</dd>
+          <dt>nCr(n, r), nPr(n, r)</dt><dd>Combinations and permutations. x! works for non-integers through the gamma function.</dd>
+          <dt>a mod b</dt><dd>Remainder with the sign of b; also mod(a, b).</dd>
+          <dt>Missing “)”</dt><dd>Open brackets close automatically at the end of the line.</dd>
+        </dl>
+        <h3>Functions</h3>
+        <p class="hint" style="font-family:var(--f-num);line-height:1.7">sin cos tan sec csc cot · asin acos atan asec acsc acot atan2 · sinh cosh tanh asinh acosh atanh · ln log log2 exp · sqrt √ cbrt ∛ root hypot · abs sign floor ceil round trunc frac · gamma Γ fact nCr nPr gcd lcm · min max mod · rand randint · deg rad · constants π e φ γ</p>
+        <h3>Keyboard</h3>
+        <dl>
+          <dt><kbd>Enter</kbd> or <kbd>=</kbd> key</dt><dd>Evaluate</dd>
+          <dt><kbd>Esc</kbd></dt><dd>Clear the line</dd>
+          <dt><kbd>↑</kbd> <kbd>↓</kbd></dt><dd>Step through history</dd>
+          <dt><kbd>*</kbd> <kbd>/</kbd> <kbd>^</kbd></dt><dd>Multiply, divide, power. After a result, starting with an operator continues from Ans.</dd>
+        </dl>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   Engine: tokenizer, parser, evaluator, number formatting.
+   Pure — no DOM.
+   ============================================================ */
+(function (G) {
+'use strict';
+class CalcError extends Error {}
+const err = m => new CalcError(m);
+const env = { vars: {}, ans: 0, mem: 0 };
+let ANG = 'DEG';
+
+const PERIOD = { DEG: 360, RAD: 2 * Math.PI, GRAD: 400 };
+const toRad = x => ANG === 'DEG' ? x * Math.PI / 180 : ANG === 'GRAD' ? x * Math.PI / 200 : x;
+const fromRad = x => ANG === 'DEG' ? x * 180 / Math.PI : ANG === 'GRAD' ? x * 200 / Math.PI : x;
+function exactTrig(kind, x) {
+  if (ANG === 'RAD') return null;
+  const P = PERIOD[ANG]; let r = x % P; if (r < 0) r += P;
+  const q = P / 4; if (r % q !== 0) return null;
+  const k = Math.round(r / q) % 4;
+  if (kind === 'sin') return [0, 1, 0, -1][k];
+  if (kind === 'cos') return [1, 0, -1, 0][k];
+  if (k % 2) throw err('tan is undefined at this angle');
+  return 0;
+}
+const tidyT = (v, x) => (Math.abs(v) < 1e-15 && Math.abs(toRad(x)) > 1e-6) ? 0 : v;
+function sin(x) { const e = exactTrig('sin', x); return e !== null ? e : tidyT(Math.sin(toRad(x)), x); }
+function cos(x) { const e = exactTrig('cos', x); return e !== null ? e : tidyT(Math.cos(toRad(x)), x); }
+function tan(x) {
+  const e = exactTrig('tan', x); if (e !== null) return e;
+  const r = toRad(x); if (Math.abs(Math.cos(r)) < 1e-15) throw err('tan is undefined at this angle');
+  return tidyT(Math.tan(r), x);
+}
+const domain = n => err(n + ': input is outside its domain');
+const isInt = n => Number.isInteger(n) || Math.abs(n - Math.round(n)) < 1e-9;
+function needInt(n, name) { if (!isInt(n)) throw err(name + ' needs whole numbers'); return Math.round(n); }
+
+const LZ = [676.5203681218851, -1259.1392167224028, 771.32342877765313, -176.61502916214059,
+  12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+function gammaRaw(z) {
+  if (z < 0.5) return Math.PI / (Math.sin(Math.PI * z) * gammaRaw(1 - z));
+  z -= 1; let x = 0.99999999999980993;
+  for (let i = 0; i < 8; i++) x += LZ[i] / (z + i + 1);
+  const t = z + 7.5;
+  return Math.sqrt(2 * Math.PI) * Math.pow(t, z + 0.5) * Math.exp(-t) * x;
+}
+function gamma(z) {
+  if (z <= 0 && isInt(z)) throw err('Γ is undefined at zero and negative integers');
+  if (isInt(z) && z > 0 && z <= 171) return factorial(Math.round(z) - 1);
+  return gammaRaw(z);
+}
+function factorial(n) {
+  if (isInt(n)) {
+    n = Math.round(n);
+    if (n < 0) throw err('Factorial of a negative integer is undefined');
+    if (n > 170) return Infinity;
+    let r = 1; for (let i = 2; i <= n; i++) r *= i; return r;
+  }
+  return gamma(n + 1);
+}
+function nCr(n, r) {
+  n = needInt(n, 'nCr'); r = needInt(r, 'nCr');
+  if (n < 0) throw err('nCr needs n ≥ 0'); if (r < 0 || r > n) return 0;
+  r = Math.min(r, n - r); let v = 1;
+  for (let i = 1; i <= r; i++) v = v * (n - r + i) / i;
+  return v < 9e15 ? Math.round(v) : v;
+}
+function nPr(n, r) {
+  n = needInt(n, 'nPr'); r = needInt(r, 'nPr');
+  if (n < 0) throw err('nPr needs n ≥ 0'); if (r < 0 || r > n) return 0;
+  let v = 1; for (let i = 0; i < r; i++) v *= n - i; return v;
+}
+function gcd2(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { [a, b] = [b, a % b]; } return a; }
+function powr(a, b) {
+  if (a === 0 && b < 0) throw err('Division by zero');
+  if (a < 0 && !Number.isInteger(b)) {
+    for (let q = 1; q < 100; q += 2) {
+      const p = b * q;
+      if (Math.abs(p - Math.round(p)) < 1e-9) {
+        const v = Math.pow(-a, b);
+        return Math.round(p) % 2 ? -v : v;
+      }
+    }
+    throw err('A negative base with this power has no real result');
+  }
+  return Math.pow(a, b);
+}
+function rootN(x, n) {
+  if (n === 0) throw err('root: the index cannot be 0');
+  if (x < 0) {
+    if (isInt(n) && Math.round(n) % 2 !== 0) return -Math.pow(-x, 1 / n);
+    throw err('An even root of a negative number has no real result');
+  }
+  return Math.pow(x, 1 / n);
+}
+function modf(a, b) { if (b === 0) throw err('mod by zero'); const r = a % b; return (r !== 0 && (r < 0) !== (b < 0)) ? r + b : r; }
+const pos = (name, f) => x => { if (x <= 0) throw err(name + ' needs a positive number'); return f(x); };
+
+const FUNCS = {
+  sin: [1, 1, sin], cos: [1, 1, cos], tan: [1, 1, tan],
+  sec: [1, 1, x => { const c = cos(x); if (c === 0) throw err('sec is undefined at this angle'); return 1 / c; }],
+  csc: [1, 1, x => { const s = sin(x); if (s === 0) throw err('csc is undefined at this angle'); return 1 / s; }],
+  cot: [1, 1, x => { const s = sin(x); if (s === 0) throw err('cot is undefined at this angle'); return cos(x) / s; }],
+  asin: [1, 1, x => { if (x < -1 || x > 1) throw domain('sin⁻¹'); return fromRad(Math.asin(x)); }],
+  acos: [1, 1, x => { if (x < -1 || x > 1) throw domain('cos⁻¹'); return fromRad(Math.acos(x)); }],
+  atan: [1, 1, x => fromRad(Math.atan(x))],
+  atan2: [2, 2, (y, x) => { if (x === 0 && y === 0) throw err('atan2(0, 0) is undefined'); return fromRad(Math.atan2(y, x)); }],
+  asec: [1, 1, x => { if (Math.abs(x) < 1) throw domain('sec⁻¹'); return fromRad(Math.acos(1 / x)); }],
+  acsc: [1, 1, x => { if (Math.abs(x) < 1) throw domain('csc⁻¹'); return fromRad(Math.asin(1 / x)); }],
+  acot: [1, 1, x => fromRad(x === 0 ? Math.PI / 2 : Math.atan(1 / x))],
+  sinh: [1, 1, Math.sinh], cosh: [1, 1, Math.cosh], tanh: [1, 1, Math.tanh],
+  asinh: [1, 1, Math.asinh],
+  acosh: [1, 1, x => { if (x < 1) throw domain('cosh⁻¹'); return Math.acosh(x); }],
+  atanh: [1, 1, x => { if (x <= -1 || x >= 1) throw domain('tanh⁻¹'); return Math.atanh(x); }],
+  ln: [1, 1, pos('ln', Math.log)],
+  log: [1, 2, (x, b) => {
+    if (x <= 0) throw err('log needs a positive number');
+    if (b === undefined) return Math.log10(x);
+    if (b <= 0 || b === 1) throw err('log base must be positive and not 1');
+    return Math.log(x) / Math.log(b);
+  }],
+  log2: [1, 1, pos('log₂', Math.log2)],
+  exp: [1, 1, Math.exp],
+  sqrt: [1, 1, x => { if (x < 0) throw err('√ of a negative number has no real result'); return Math.sqrt(x); }],
+  cbrt: [1, 1, Math.cbrt], root: [2, 2, rootN],
+  abs: [1, 1, Math.abs], sign: [1, 1, Math.sign], floor: [1, 1, Math.floor], ceil: [1, 1, Math.ceil], trunc: [1, 1, Math.trunc],
+  round: [1, 2, (x, d = 0) => { d = needInt(d, 'round'); const f = Math.pow(10, d); return Math.round(x * f) / f; }],
+  frac: [1, 1, x => x - Math.trunc(x)],
+  gamma: [1, 1, gamma], 'Γ': [1, 1, gamma], fact: [1, 1, factorial],
+  nCr: [2, 2, nCr], nPr: [2, 2, nPr],
+  gcd: [2, Infinity, (...a) => a.map(v => needInt(v, 'gcd')).reduce(gcd2)],
+  lcm: [2, Infinity, (...a) => a.map(v => needInt(v, 'lcm')).reduce((x, y) => (x && y) ? Math.abs(x * y) / gcd2(x, y) : 0)],
+  min: [1, Infinity, Math.min], max: [1, Infinity, Math.max],
+  mod: [2, 2, modf], hypot: [2, Infinity, Math.hypot],
+  rand: [0, 0, Math.random],
+  randint: [2, 2, (a, b) => { a = needInt(a, 'randint'); b = needInt(b, 'randint'); if (a > b) [a, b] = [b, a]; return a + Math.floor(Math.random() * (b - a + 1)); }],
+  deg: [1, 1, x => x * 180 / Math.PI], rad: [1, 1, x => x * Math.PI / 180],
+};
+const PHI = (1 + Math.sqrt(5)) / 2;
+const CONSTS = { pi: Math.PI, 'π': Math.PI, e: Math.E, phi: PHI, 'φ': PHI, 'γ': 0.5772156649015329 };
+const FN_NAMES = Object.keys(FUNCS).sort((a, b) => b.length - a.length);
+
+function splitIdent(id, known) {
+  if (known(id)) return [id];
+  for (const f of FN_NAMES) {
+    if (id.length > f.length && id.startsWith(f)) { const r = splitIdent(id.slice(f.length), known); if (r) return [f, ...r]; }
+  }
+  for (let L = id.length - 1; L >= 1; L--) {
+    const h = id.slice(0, L);
+    if (known(h) && !FUNCS[h]) { const r = splitIdent(id.slice(L), known); if (r) return [h, ...r]; }
+  }
+  return null;
+}
+
+function tokenize(src, known) {
+  const s = src.replace(/[×·∙]/g, '*').replace(/÷/g, '/').replace(/[−–]/g, '-').replace(/\*\*/g, '^');
+  const out = []; let i = 0, m;
+  while (i < s.length) {
+    const c = s[i];
+    if (/\s/.test(c)) { i++; continue; }
+    const rest = s.slice(i);
+    if ((m = rest.match(/^(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/))) {
+      out.push({ t: 'num', v: parseFloat(m[0]) }); i += m[0].length; continue;
+    }
+    if (rest.startsWith('⁻¹')) { out.push({ t: 'op', v: '⁻¹' }); i += 2; continue; }
+    if ((m = rest.match(/^(?:[A-Za-z_][A-Za-z0-9_]*|[πφγΓ])/))) {
+      const parts = splitIdent(m[0], known) || [m[0]];
+      for (const p of parts) out.push({ t: 'id', v: p });
+      i += m[0].length; continue;
+    }
+    if (c === '√') { out.push({ t: 'id', v: 'sqrt' }); i++; continue; }
+    if (c === '∛') { out.push({ t: 'id', v: 'cbrt' }); i++; continue; }
+    if ('+-*/^(),!%²³°'.includes(c)) { out.push({ t: 'op', v: c }); i++; continue; }
+    throw err('Unexpected “' + c + '”');
+  }
+  return out;
+}
+
+function parse(src, known) {
+  const T = tokenize(src, known); let p = 0;
+  if (!T.length) throw err('Empty expression');
+  const peek = () => T[p];
+  const isOp = v => T[p] && T[p].t === 'op' && T[p].v === v;
+  const closeParen = () => { if (p >= T.length) return; if (!isOp(')')) throw err('Expected “)”'); p++; };
+  function expr() { let a = term(); while (isOp('+') || isOp('-')) { const o = T[p++].v; a = { k: 'bin', o, a, b: term() }; } return a; }
+  function term() {
+    let a = imp();
+    for (;;) {
+      if (isOp('*') || isOp('/')) { const o = T[p++].v; a = { k: 'bin', o, a, b: imp() }; }
+      else if (peek() && peek().t === 'id' && peek().v === 'mod') { p++; a = { k: 'bin', o: 'mod', a, b: imp() }; }
+      else return a;
+    }
+  }
+  function startsPrimary() { const t = peek(); if (!t) return false; if (t.t === 'num') return true; if (t.t === 'id') return t.v !== 'mod'; return t.v === '('; }
+  function imp() { let a = unary(); while (startsPrimary()) a = { k: 'bin', o: '*', a, b: power() }; return a; }
+  function unary() { if (isOp('-')) { p++; return { k: 'neg', a: unary() }; } if (isOp('+')) { p++; return unary(); } return power(); }
+  function power() { const b = postfix(); if (isOp('^')) { p++; return { k: 'bin', o: '^', a: b, b: unary() }; } return b; }
+  function postfix() {
+    let a = primary();
+    for (;;) { const t = peek(); if (t && t.t === 'op' && ['!', '%', '²', '³', '⁻¹', '°'].includes(t.v)) { p++; a = { k: 'post', o: t.v, a }; } else return a; }
+  }
+  function primary() {
+    const t = T[p++];
+    if (!t) throw err('The expression is incomplete');
+    if (t.t === 'num') return { k: 'num', v: t.v };
+    if (t.t === 'op' && t.v === '(') { const e = expr(); closeParen(); return e; }
+    if (t.t === 'id') {
+      const f = FUNCS[t.v];
+      if (f && t.v !== 'mod' || (t.v === 'mod' && isOp('('))) {
+        if (isOp('(')) {
+          p++; const args = [];
+          if (!isOp(')') && p < T.length) { args.push(expr()); while (isOp(',')) { p++; args.push(expr()); } }
+          closeParen(); return { k: 'call', f: t.v, args };
+        }
+        if (f[0] === 0) return { k: 'call', f: t.v, args: [] };
+        return { k: 'call', f: t.v, args: [unary()] };
+      }
+      if (t.v === 'mod') throw err('“mod” needs a number before it');
+      return { k: 'var', n: t.v };
+    }
+    if (t.v === ')') throw err('Unmatched “)”');
+    throw err('Unexpected “' + t.v + '”');
+  }
+  const tree = expr();
+  if (p < T.length) { const t = T[p]; throw err(t.v === ')' ? 'Unmatched “)”' : (t.v === ',' ? 'A comma only separates function arguments' : 'Unexpected “' + t.v + '”')); }
+  return tree;
+}
+
+function lookup(n, scope) {
+  if (scope && Object.prototype.hasOwnProperty.call(scope, n)) return scope[n];
+  if (n in CONSTS) return CONSTS[n];
+  if (n === 'Ans') return env.ans;
+  if (n === 'M') return env.mem;
+  if (Object.prototype.hasOwnProperty.call(env.vars, n)) return env.vars[n];
+  throw err('“' + n + '” is not defined');
+}
+function ev(n, s) {
+  switch (n.k) {
+    case 'num': return n.v;
+    case 'var': return lookup(n.n, s);
+    case 'neg': return -ev(n.a, s);
+    case 'bin': {
+      const a = ev(n.a, s), b = ev(n.b, s);
+      switch (n.o) {
+        case '+': return a + b; case '-': return a - b; case '*': return a * b;
+        case '/': if (b === 0) throw err('Division by zero'); return a / b;
+        case '^': return powr(a, b);
+        case 'mod': return modf(a, b);
+      }
+      break;
+    }
+    case 'post': {
+      const a = ev(n.a, s);
+      switch (n.o) {
+        case '!': return factorial(a);
+        case '%': return a / 100;
+        case '²': return a * a;
+        case '³': return a * a * a;
+        case '⁻¹': if (a === 0) throw err('Division by zero'); return 1 / a;
+        case '°': return ANG === 'DEG' ? a : ANG === 'GRAD' ? a * 400 / 360 : a * Math.PI / 180;
+      }
+      break;
+    }
+    case 'call': {
+      const f = FUNCS[n.f], c = n.args.length;
+      if (c < f[0] || c > f[1]) {
+        const want = f[0] === f[1] ? f[0] : f[1] === Infinity ? f[0] + ' or more' : f[0] + '–' + f[1];
+        throw err(n.f + ' takes ' + want + ' argument' + (f[0] === 1 && f[1] === 1 ? '' : 's'));
+      }
+      return f[2](...n.args.map(a => ev(a, s)));
+    }
+  }
+  throw err('Could not evaluate');
+}
+
+function compile(src, extra = []) {
+  const ex = new Set(extra);
+  const known = n => !!FUNCS[n] || n in CONSTS || n === 'Ans' || n === 'M' || n === 'mod' || Object.prototype.hasOwnProperty.call(env.vars, n) || ex.has(n);
+  const tree = parse(src, known);
+  return (scope = {}, angle) => {
+    const prev = ANG; if (angle) ANG = angle;
+    try { return ev(tree, scope); } finally { ANG = prev; }
+  };
+}
+
+const clean = v => (typeof v === 'number' && isFinite(v)) ? parseFloat(v.toPrecision(15)) : v;
+const strip = s => s.includes('.') ? s.replace(/\.?0+$/, '') : s;
+function splitExp(s) { const i = s.indexOf('e'); return i < 0 ? [s, null] : [s.slice(0, i), parseInt(s.slice(i + 1), 10)]; }
+function groupNum(m) {
+  const neg = m[0] === '-'; const s = neg ? m.slice(1) : m;
+  const [a, b] = s.split('.');
+  return (neg ? '−' : '') + a.replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + (b !== undefined ? '.' + b : '');
+}
+function fmtNum(v, o = {}) {
+  const fmt = o.fmt || 'NORM', d = o.digits ?? 4, sig = o.sig || 12;
+  if (typeof v !== 'number' || Number.isNaN(v)) return { text: 'NaN', html: 'not a real number' };
+  if (!isFinite(v)) return { text: v > 0 ? 'Infinity' : '-Infinity', html: v > 0 ? '∞' : '−∞' };
+  v = clean(v); if (v === 0) v = 0;
+  let m, e = null;
+  if (fmt === 'SCI' || (fmt === 'FIX' && Math.abs(v) >= 1e15)) { [m, e] = splitExp(v.toExponential(d)); }
+  else if (fmt === 'ENG') {
+    if (v === 0) { m = (0).toFixed(d); e = 0; }
+    else {
+      e = Math.floor(Math.log10(Math.abs(v)) / 3) * 3;
+      m = (v / Math.pow(10, e)).toFixed(d);
+      if (Math.abs(parseFloat(m)) >= 1000) { e += 3; m = (v / Math.pow(10, e)).toFixed(d); }
+    }
+  }
+  else if (fmt === 'FIX') m = v.toFixed(d);
+  else { [m, e] = splitExp(v.toPrecision(sig)); m = strip(m); if (e === 0) e = null; }
+  const text = m + (e !== null ? 'E' + e : '');
+  const mh = o.group ? groupNum(m) : m.replace('-', '−');
+  const html = mh + (e !== null ? '<span class="x10">×10<sup>' + (e < 0 ? '−' + (-e) : e) + '</sup></span>' : '');
+  return { text, html };
+}
+
+G.Engine = { compile, fmtNum, clean, env, CalcError, FUNCS, CONSTS, factorial, gamma };
+})(globalThis);
+</script>
+
+<script>
+/* ============================================================
+   Interface
+   ============================================================ */
+(function () {
+'use strict';
+const { compile, fmtNum, clean, env, CalcError, FUNCS, CONSTS } = Engine;
+const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const STORE = 'kepler-sc9-v1';
+
+const state = { angle: 'DEG', fmt: 'NORM', digits: 4, group: true, shift: false, more: false, ans: 0, mem: 0, vars: {}, history: [], justEval: false, tab: 'history', last: null };
+try {
+  const d = JSON.parse(localStorage.getItem(STORE) || 'null');
+  if (d) for (const k of ['angle', 'fmt', 'digits', 'group', 'more', 'ans', 'mem', 'vars', 'history', 'tab']) if (k in d) state[k] = d[k];
+} catch (e) {}
+function save() {
+  try {
+    const { angle, fmt, digits, group, more, ans, mem, vars, history, tab } = state;
+    localStorage.setItem(STORE, JSON.stringify({ angle, fmt, digits, group, more, ans, mem, vars, history: history.slice(0, 120), tab }));
+  } catch (e) {}
+}
+function syncEnv() { env.vars = state.vars; env.ans = state.ans; env.mem = state.mem; }
+syncEnv();
+
+const fmtOpts = () => ({ fmt: state.fmt, digits: state.digits, group: state.group });
+const F = v => fmtNum(v, fmtOpts()).html;              // calculator-format html
+const FN = v => fmtNum(v, { group: true }).html;       // normal, 12 significant digits
+const FT = v => fmtNum(v, {}).text;                    // plain text for re-entry
+const insertable = v => { const t = FT(v); return v < 0 ? '(' + t + ')' : t; };
+const msg = e => (e instanceof CalcError) ? e.message : 'Could not evaluate that';
+
+/* ---------- display ---------- */
+const input = $('#expr'), res = $('#res'), calcEl = $('#calc');
+if (matchMedia('(pointer: coarse)').matches) input.setAttribute('inputmode', 'none');
+
+function showValue(v, kind, prefix = '') {
+  state.last = { v, kind, prefix };
+  res.className = 'res ' + kind;
+  res.innerHTML = (prefix ? esc(prefix) + ' = ' : '') + F(v);
+  res.scrollLeft = res.scrollWidth;
+}
+function showError(m) { state.last = null; res.className = 'res err'; res.textContent = m; }
+function blank() { state.last = null; res.className = 'res preview'; res.textContent = ''; }
+
+function splitAssign(src) {
+  const m = src.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=(?!=)(.*)$/);
+  if (m && !FUNCS[m[1]] && !(m[1] in CONSTS) && !['Ans', 'M', 'mod', 'x'].includes(m[1])) return { name: m[1], src: m[2] };
+  if (m && m[1] === 'x') return { name: 'x', src: m[2] };
+  return { name: null, src };
+}
+function preview() {
+  const raw = input.value;
+  if (!raw.trim()) { blank(); return; }
+  if (/rand/.test(raw)) { res.className = 'res preview'; res.textContent = '…'; state.last = null; return; }
+  const { name, src } = splitAssign(raw);
+  try { const v = compile(src)(); if (typeof v !== 'number' || Number.isNaN(v)) throw 0; showValue(v, 'preview', name || ''); }
+  catch (e) { blank(); }
+}
+function commit() {
+  const raw = input.value.trim(); if (!raw) return;
+  const { name, src } = splitAssign(raw);
+  try {
+    const v = clean(compile(src)());
+    if (Number.isNaN(v)) throw new CalcError('Math error: no real result');
+    state.ans = v; if (name) state.vars[name] = v; syncEnv();
+    state.history.unshift({ e: raw, v }); if (state.history.length > 120) state.history.length = 120;
+    showValue(v, 'final', name || '');
+    state.justEval = true; histIdx = -1;
+    renderHistory(); renderVars(); save();
+  } catch (e) { showError(msg(e)); }
+}
+function setCaret(i) { try { input.setSelectionRange(i, i); } catch (e) {} }
+const opLike = s => /^(\s?mod\s|[+\-−×÷*/^²³!%°]|⁻¹)/.test(s);
+function insertText(str, asOp) {
+  if (state.justEval) { input.value = asOp ? 'Ans' : ''; setCaret(input.value.length); state.justEval = false; }
+  const v = input.value;
+  const s = input.selectionStart ?? v.length, e = input.selectionEnd ?? s;
+  input.value = v.slice(0, s) + str + v.slice(e);
+  setCaret(s + str.length);
+  preview();
+}
+function backspace() {
+  state.justEval = false;
+  const v = input.value, s = input.selectionStart ?? v.length, e = input.selectionEnd ?? s;
+  if (s !== e) { input.value = v.slice(0, s) + v.slice(e); setCaret(s); }
+  else if (s > 0) {
+    const m = v.slice(0, s).match(/(?:[A-Za-z_][A-Za-z0-9_]*\(|Ans| mod |⁻¹)$/);
+    const n = m ? m[0].length : 1;
+    input.value = v.slice(0, s - n) + v.slice(s); setCaret(s - n);
+  }
+  preview();
+}
+function clearLine() { input.value = ''; state.justEval = false; blank(); setCaret(0); }
+function currentValue() {
+  if (state.justEval || !input.value.trim()) return state.ans;
+  return clean(compile(splitAssign(input.value).src)());
+}
+function refocus() { if (!matchMedia('(pointer: coarse)').matches) input.focus({ preventScroll: true }); }
+function sendToCalc(text) {
+  insertText(text, false);
+  const l = $('#lcd'); l.classList.remove('flash'); void l.offsetWidth; l.classList.add('flash');
+  refocus();
+}
+
+/* ---------- keypad ---------- */
+const TOP = [
+  { m: '2nd', ma: 'shift', c: 'shift' },
+  { m: 'MORE', ma: 'keys', c: 'fn', id: 'k-more' },
+  { m: 'Ans', mi: 'Ans', a: 'x', ai: 'x' },
+  { m: '◀', ma: 'left', a: '⇤', aa: 'home', label: 'Cursor left' },
+  { m: '▶', ma: 'right', a: '⇥', aa: 'end', label: 'Cursor right' },
+];
+const SCI = [
+  { m: 'sin', mi: 'sin(', a: 'sin⁻¹', ai: 'asin(' }, { m: 'cos', mi: 'cos(', a: 'cos⁻¹', ai: 'acos(' }, { m: 'tan', mi: 'tan(', a: 'tan⁻¹', ai: 'atan(' },
+  { m: 'ln', mi: 'ln(', a: 'eˣ', ai: 'e^' }, { m: 'log', mi: 'log(', a: '10ˣ', ai: '10^' },
+  { m: 'x²', mi: '²', a: '√x', ai: '√(' }, { m: 'xʸ', mi: '^', a: 'ʸ√x', ai: 'root(' }, { m: 'x³', mi: '³', a: '∛x', ai: '∛(' },
+  { m: 'x⁻¹', mi: '⁻¹', a: 'x!', ai: '!' }, { m: 'π', mi: 'π', a: 'e', ai: 'e' },
+  { m: 'sinh', mi: 'sinh(', a: 'sinh⁻¹', ai: 'asinh(' }, { m: 'cosh', mi: 'cosh(', a: 'cosh⁻¹', ai: 'acosh(' }, { m: 'tanh', mi: 'tanh(', a: 'tanh⁻¹', ai: 'atanh(' },
+  { m: 'nCr', mi: 'nCr(', a: 'nPr', ai: 'nPr(' }, { m: '|x|', mi: 'abs(', a: '°', ai: '°' },
+];
+const MORE = [
+  { m: 'sec', mi: 'sec(', a: 'sec⁻¹', ai: 'asec(' }, { m: 'csc', mi: 'csc(', a: 'csc⁻¹', ai: 'acsc(' }, { m: 'cot', mi: 'cot(', a: 'cot⁻¹', ai: 'acot(' },
+  { m: 'log₂', mi: 'log2(', a: 'logₓb', ai: 'log(' }, { m: 'Γ(x)', mi: 'gamma(', a: 'frac', ai: 'frac(' },
+  { m: 'gcd', mi: 'gcd(', a: 'lcm', ai: 'lcm(' }, { m: 'min', mi: 'min(', a: 'max', ai: 'max(' }, { m: '⌊x⌋', mi: 'floor(', a: '⌈x⌉', ai: 'ceil(' },
+  { m: 'round', mi: 'round(', a: 'trunc', ai: 'trunc(' }, { m: 'hypot', mi: 'hypot(', a: 'sign', ai: 'sign(' },
+  { m: 'atan2', mi: 'atan2(', a: '→deg', ai: 'deg(' }, { m: 'ⁿ√x', mi: 'root(', a: '→rad', ai: 'rad(' }, { m: 'rand', mi: 'rand()', a: 'randint', ai: 'randint(' },
+  { m: 'φ', mi: 'φ', a: 'γ', ai: 'γ' }, { m: 'x°', mi: '°', a: 'exp', ai: 'exp(' },
+];
+const SHARED = [
+  { m: '(', mi: '(' }, { m: ')', mi: ')' }, { m: ',', mi: ', ', label: 'Comma' },
+  { m: 'EXP', mi: 'E', a: 'mod', ai: ' mod ' }, { m: '%', mi: '%', a: 'rand', ai: 'rand()' },
+];
+const NUM = [
+  { m: '7', mi: '7', c: 'num' }, { m: '8', mi: '8', c: 'num' }, { m: '9', mi: '9', c: 'num' }, { m: '⌫', ma: 'del', c: 'op', label: 'Backspace' }, { m: 'AC', ma: 'ac', c: 'clr', a: 'CLR VAR', aa: 'clrvar', label: 'All clear' },
+  { m: '4', mi: '4', c: 'num' }, { m: '5', mi: '5', c: 'num' }, { m: '6', mi: '6', c: 'num' }, { m: '×', mi: '×', c: 'op', label: 'Multiply' }, { m: '÷', mi: '÷', c: 'op', label: 'Divide' },
+  { m: '1', mi: '1', c: 'num' }, { m: '2', mi: '2', c: 'num' }, { m: '3', mi: '3', c: 'num' }, { m: '+', mi: '+', c: 'op', label: 'Plus' }, { m: '−', mi: '−', c: 'op', label: 'Minus' },
+  { m: '0', mi: '0', c: 'num' }, { m: '.', mi: '.', c: 'num', label: 'Decimal point' }, { m: '(−)', mi: '−', c: 'op', notOp: true, label: 'Negative' }, { m: '=', ma: 'eq', c: 'eq', wide: true, label: 'Equals' },
+];
+const pad = $('#pad');
+function renderPad() {
+  pad.textContent = '';
+  for (const k of [...TOP, ...(state.more ? MORE : SCI), ...SHARED, ...NUM]) {
+    const d = document.createElement('div');
+    d.className = 'key ' + (k.c || 'fn') + (k.wide ? ' wide' : '') + (k.ma === 'keys' && state.more ? ' on' : '');
+    const a = document.createElement('span'); a.className = 'alt'; a.textContent = k.a || ' '; a.setAttribute('aria-hidden', 'true');
+    const b = document.createElement('button'); b.type = 'button';
+    b.textContent = k.ma === 'keys' ? (state.more ? 'SCI' : 'MORE') : k.m;
+    b.setAttribute('aria-label', k.ma === 'keys' ? (state.more ? 'Show scientific keys' : 'Show more functions') : (k.label || k.m) + (k.a ? ', 2nd: ' + k.a : ''));
+    b._k = k; d.append(a, b); pad.append(d);
+  }
+}
+function action(a) {
+  const v = input.value, s = input.selectionStart ?? v.length;
+  switch (a) {
+    case 'keys': state.more = !state.more; renderPad(); renderAnn(); save(); break;
+    case 'left': state.justEval = false; setCaret(Math.max(0, s - 1)); break;
+    case 'right': state.justEval = false; setCaret(Math.min(v.length, s + 1)); break;
+    case 'home': state.justEval = false; setCaret(0); break;
+    case 'end': state.justEval = false; setCaret(v.length); break;
+    case 'del': backspace(); break;
+    case 'ac': clearLine(); break;
+    case 'clrvar': state.vars = {}; state.mem = 0; syncEnv(); renderVars(); renderAnn(); save(); clearLine(); res.textContent = 'Variables and memory cleared'; break;
+    case 'eq': commit(); break;
+  }
+}
+function press(k) {
+  if (k.ma === 'shift') { state.shift = !state.shift; renderShift(); return; }
+  const alt = state.shift && (k.ai !== undefined || k.aa);
+  if (alt) k.aa ? action(k.aa) : insertText(k.ai, opLike(k.ai));
+  else k.ma ? action(k.ma) : insertText(k.mi, !k.notOp && opLike(k.mi));
+  if (state.shift) { state.shift = false; renderShift(); }
+  refocus();
+}
+pad.addEventListener('mousedown', e => { if (e.target.closest('button')) e.preventDefault(); });
+pad.addEventListener('click', e => { const b = e.target.closest('button'); if (b && b._k) press(b._k); });
+function renderShift() { calcEl.classList.toggle('shifted', state.shift); renderAnn(); }
+
+/* memory */
+$('#mem').addEventListener('mousedown', e => e.preventDefault());
+$('#mem').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  try {
+    switch (b.dataset.m) {
+      case 'mc': state.mem = 0; break;
+      case 'mr': insertText('M', false); break;
+      case 'ms': state.mem = currentValue(); break;
+      case 'mplus': state.mem = clean(state.mem + currentValue()); break;
+      case 'mminus': state.mem = clean(state.mem - currentValue()); break;
+    }
+    if (b.dataset.m !== 'mr' && b.dataset.m !== 'mc') { showValue(state.mem, 'final', 'M'); state.justEval = true; }
+  } catch (er) { showError(msg(er)); }
+  syncEnv(); renderAnn(); renderVars(); save(); refocus();
+});
+
+/* modes */
+function renderAnn() {
+  $('#a-2nd').classList.toggle('on', state.shift);
+  $('#a-more').classList.toggle('on', state.more);
+  $('#a-m').classList.toggle('on', state.mem !== 0);
+  $('#a-ang').textContent = state.angle;
+  $('#a-fmt').textContent = state.fmt === 'NORM' ? 'NORM' : state.fmt + state.digits;
+}
+function renderModes() {
+  $$('#seg-ang button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === state.angle));
+  $$('#seg-fmt button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === state.fmt));
+  $('#dig').textContent = state.digits + ' dp';
+  $('#seg-dig').classList.toggle('dim', state.fmt === 'NORM');
+  $('#grp').setAttribute('aria-pressed', state.group);
+  renderAnn();
+}
+function rerender() { if (state.last) showValue(state.last.v, state.last.kind, state.last.prefix); else preview(); renderHistory(); renderVars(); }
+$('#seg-ang').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; state.angle = b.dataset.v; renderModes(); if (state.justEval) { /* keep */ } else preview(); save(); });
+$('#seg-fmt').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; state.fmt = b.dataset.v; renderModes(); rerender(); save(); });
+$('#seg-dig').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; state.digits = Math.max(0, Math.min(12, state.digits + +b.dataset.d)); renderModes(); rerender(); save(); });
+$('#grp').addEventListener('click', () => { state.group = !state.group; renderModes(); rerender(); save(); });
+$$('.modes').forEach(m => m.addEventListener('mousedown', e => e.preventDefault()));
+
+/* copy */
+$('#copy').addEventListener('click', () => {
+  const v = state.last ? state.last.v : state.ans; const t = FT(v); const btn = $('#copy');
+  const done = () => { btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy', 1300); };
+  try { navigator.clipboard.writeText(t).then(done, () => { input.value = t; input.select(); }); } catch (e) { input.value = t; input.select(); }
+});
+
+/* keyboard */
+let histIdx = -1;
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); commit(); return; }
+  if (e.key === 'Escape') { e.preventDefault(); clearLine(); return; }
+  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+    if (!state.history.length) return;
+    e.preventDefault();
+    histIdx = Math.max(-1, Math.min(state.history.length - 1, histIdx + (e.key === 'ArrowUp' ? 1 : -1)));
+    input.value = histIdx < 0 ? '' : state.history[histIdx].e; setCaret(input.value.length); state.justEval = false; preview(); return;
+  }
+  if (state.justEval && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    input.value = opLike(e.key) ? 'Ans' : ''; setCaret(input.value.length); state.justEval = false;
+  } else if (state.justEval && (e.key === 'Backspace' || e.key.startsWith('Arrow'))) state.justEval = false;
+});
+input.addEventListener('input', () => { state.justEval = false; preview(); });
+document.addEventListener('keydown', e => {
+  const t = e.target;
+  if (t === input || (t.closest && t.closest('input,textarea,select,[contenteditable]'))) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (t.closest && t.closest('button') && (e.key === 'Enter' || e.key === ' ')) return;
+  if (e.key === 'Enter') { e.preventDefault(); commit(); }
+  else if (e.key === 'Escape') { clearLine(); }
+  else if (e.key === 'Backspace') { e.preventDefault(); backspace(); }
+  else if (e.key.length === 1 && e.key !== ' ') { e.preventDefault(); insertText(e.key, opLike(e.key)); refocus(); }
+});
+
+/* ---------- history & variables ---------- */
+const EXAMPLES = ['2sin(30°) + √16', 'r = 4', 'π r²', 'nCr(52, 5)', '6.022E23 × 2.5', 'log(1024, 2)', '5! ÷ 3!', '(1 + 1/1000)^1000'];
+$('#examples').innerHTML = EXAMPLES.map(x => `<button type="button" class="chip" data-x="${esc(x)}">${esc(x)}</button>`).join('');
+$('#examples').addEventListener('click', e => { const b = e.target.closest('[data-x]'); if (!b) return; input.value = b.dataset.x; state.justEval = false; setCaret(input.value.length); preview(); refocus(); });
+function renderHistory() {
+  const ol = $('#hist');
+  $('#hist-empty').hidden = state.history.length > 0;
+  ol.innerHTML = state.history.map((h, i) => `<li><button type="button" class="he" data-i="${i}" data-w="e">${esc(h.e)}</button><button type="button" class="hv" data-i="${i}" data-w="v">= ${F(h.v)}</button></li>`).join('');
+}
+$('#hist').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return; const h = state.history[+b.dataset.i]; if (!h) return;
+  if (b.dataset.w === 'e') { input.value = h.e; state.justEval = false; setCaret(h.e.length); preview(); refocus(); }
+  else sendToCalc(insertable(h.v));
+});
+$('#hist-clear').addEventListener('click', () => { state.history = []; renderHistory(); save(); });
+function renderVars() {
+  const items = [['Ans', state.ans], ['M', state.mem], ...Object.entries(state.vars)];
+  $('#vars').innerHTML = items.map(([n, v]) => `<button type="button" class="chip" data-n="${esc(n)}"><small>${esc(n)} =</small>${FN(v)}</button>`).join('');
+}
+$('#vars').addEventListener('click', e => { const b = e.target.closest('[data-n]'); if (b) sendToCalc(b.dataset.n); });
+
+/* ---------- tabs ---------- */
+const TABS = ['history', 'graph', 'solve', 'calculus', 'stats', 'convert', 'base', 'const', 'guide'];
+function showTab(t) {
+  if (!TABS.includes(t)) t = 'history';
+  state.tab = t;
+  $$('#tabs button').forEach(b => { b.setAttribute('aria-selected', b.dataset.tab === t); b.tabIndex = b.dataset.tab === t ? 0 : -1; });
+  TABS.forEach(n => $('#p-' + n).hidden = n !== t);
+  if (t === 'graph') requestAnimationFrame(() => { gDraw(); gAnalyze(); });
+  save();
+}
+$('#tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) showTab(b.dataset.tab); });
+$('#tabs').addEventListener('keydown', e => {
+  if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+  const i = TABS.indexOf(state.tab), n = TABS[(i + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length];
+  showTab(n); $(`#tabs [data-tab="${n}"]`).focus();
+});
+try { const h = location.hash.slice(1); if (TABS.includes(h)) state.tab = h; } catch (e) {}
+
+/* shared helpers for tool panes */
+const evalField = (el, extra) => clean(compile(el.value)({}, 'RAD'));
+function eqFn(src, v = 'x') {
+  const parts = src.split('=');
+  if (parts.length > 2) throw new CalcError('Use a single “=”');
+  const L = compile(parts[0], [v]); const R = parts.length === 2 ? compile(parts[1], [v]) : null;
+  return R ? (x => L({ [v]: x }, 'RAD') - R({ [v]: x }, 'RAD')) : (x => L({ [v]: x }, 'RAD'));
+}
+const safe = (f, x) => { try { const y = f(x); return typeof y === 'number' ? y : NaN; } catch (e) { return NaN; } };
+const chip = (v, label = '') => `<button type="button" class="chip" data-ins="${esc(insertable(v))}">${label ? `<small>${label}</small>` : ''}${FN(v)}</button>`;
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-ins]'); if (b) sendToCalc(b.dataset.ins);
+});
+
+function bisect(f, lo, hi, flo) {
+  for (let k = 0; k < 200; k++) {
+    const m = (lo + hi) / 2; if (m === lo || m === hi) break;
+    const fm = safe(f, m); if (!isFinite(fm)) return null;
+    if (fm === 0) return m;
+    if ((fm < 0) === (flo < 0)) { lo = m; flo = fm; } else hi = m;
+  }
+  return (lo + hi) / 2;
+}
+function golden(g, a, b) {
+  const r = (Math.sqrt(5) - 1) / 2; let c = b - r * (b - a), d = a + r * (b - a), gc = g(c), gd = g(d);
+  for (let i = 0; i < 90; i++) { if (gc < gd) { b = d; d = c; gd = gc; c = b - r * (b - a); gc = g(c); } else { a = c; c = d; gc = gd; d = a + r * (b - a); gd = g(d); } }
+  return (a + b) / 2;
+}
+function findRoots(f, a, b, N = 4000, max = 50) {
+  const roots = [], h = (b - a) / N, xs = [], ys = [];
+  const push = r => { if (roots.length < max && !roots.some(q => Math.abs(q - r) <= 1e-7 * Math.max(1, Math.abs(r)))) roots.push(r); };
+  for (let i = 0; i <= N; i++) { const x = a + i * h; xs.push(x); ys.push(safe(f, x)); }
+  for (let i = 0; i <= N; i++) {
+    if (ys[i] === 0) { push(xs[i]); continue; }
+    if (i < N && isFinite(ys[i]) && isFinite(ys[i + 1]) && ys[i] * ys[i + 1] < 0) {
+      const r = bisect(f, xs[i], xs[i + 1], ys[i]);
+      if (r !== null && Math.abs(safe(f, r)) <= Math.min(Math.abs(ys[i]), Math.abs(ys[i + 1]))) push(r);
+    }
+  }
+  for (let i = 1; i < N; i++) {
+    const y0 = ys[i - 1], y1 = ys[i], y2 = ys[i + 1];
+    if (!(isFinite(y0) && isFinite(y1) && isFinite(y2))) continue;
+    if (y0 * y1 <= 0 || y1 * y2 <= 0) continue;
+    if (Math.abs(y1) <= Math.abs(y0) && Math.abs(y1) <= Math.abs(y2) && Math.abs(y1) < 1e-2 * Math.max(Math.abs(y0), Math.abs(y2), 1e-300) + 1e-6) {
+      const r = golden(x => Math.abs(safe(f, x)), xs[i - 1], xs[i + 1]);
+      if (Math.abs(safe(f, r)) < 1e-10) push(r);
+    }
+  }
+  return roots.map(r => Math.abs(r) < 1e-12 ? 0 : clean(parseFloat(r.toPrecision(13)))).sort((p, q) => p - q);
+}
+
+/* ---------- GRAPH ---------- */
+const GD = { fns: ['sin(x)', 'x^2/4 - 1', ''], comp: [null, null, null], view: null, hover: null, W: 0, H: 0, marks: [] };
+try { const g = JSON.parse(localStorage.getItem(STORE + '-g') || 'null'); if (g && Array.isArray(g.fns)) GD.fns = g.fns.slice(0, 3); } catch (e) {}
+const gcv = $('#gcv'), gctx = gcv.getContext('2d');
+function gCompile() {
+  GD.fns.forEach((s, i) => {
+    const el = $('#gerr' + i); el.textContent = ''; GD.comp[i] = null;
+    const src = s.trim().replace(/^(?:y|f\s*\(\s*x\s*\))\s*=/, '');
+    if (!src) return;
+    try {
+      const fn = compile(src, ['x']); const f = x => fn({ x }, 'RAD');
+      try { f(0.5); } catch (e) { if (/not defined/.test(e.message)) throw e; }
+      GD.comp[i] = f;
+    } catch (e) { el.textContent = msg(e); }
+  });
+}
+[0, 1, 2].forEach(i => {
+  const el = $('#g' + i); el.value = GD.fns[i] || '';
+  el.addEventListener('input', () => {
+    GD.fns[i] = el.value; gCompile(); gDraw(); clearTimeout(GD.t); GD.t = setTimeout(gAnalyze, 250);
+    try { localStorage.setItem(STORE + '-g', JSON.stringify({ fns: GD.fns })); } catch (e) {}
+  });
+});
+const niceStep = raw => { const p = Math.pow(10, Math.floor(Math.log10(raw))), n = raw / p; return (n < 1.5 ? 1 : n < 3.5 ? 2 : n < 7.5 ? 5 : 10) * p; };
+const tickLab = v => { if (Math.abs(v) < 1e-12) return '0'; const a = Math.abs(v); if (a >= 1e5 || a < 1e-3) return v.toExponential(1).replace('e+', 'e'); return String(parseFloat(v.toPrecision(6))).replace('-', '−'); };
+function gReset() { const r = GD.H / GD.W || 0.62; GD.view = { xmin: -10, xmax: 10, ymin: -10 * r, ymax: 10 * r }; }
+function gDraw() {
+  const box = $('#gbox'); const W = box.clientWidth; if (!W) return;
+  const H = Math.round(Math.max(240, Math.min(460, W * 0.62)));
+  const dpr = window.devicePixelRatio || 1;
+  if (GD.W !== W || GD.H !== H) { gcv.width = W * dpr; gcv.height = H * dpr; gcv.style.height = H + 'px'; GD.W = W; GD.H = H; }
+  if (!GD.view) gReset();
+  const c = gctx; c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const cs = getComputedStyle(document.documentElement), col = n => cs.getPropertyValue(n).trim();
+  const { xmin, xmax, ymin, ymax } = GD.view;
+  const X = x => (x - xmin) / (xmax - xmin) * W, Y = y => H - (y - ymin) / (ymax - ymin) * H;
+  c.fillStyle = col('--plot'); c.fillRect(0, 0, W, H);
+  const sx = niceStep((xmax - xmin) / Math.max(4, W / 90)), sy = niceStep((ymax - ymin) / Math.max(3, H / 70));
+  // minor grid
+  c.lineWidth = 1; c.strokeStyle = col('--grid'); c.beginPath();
+  for (let x = Math.ceil(xmin / (sx / 5)) * sx / 5; x <= xmax; x += sx / 5) { const px = Math.round(X(x)) + .5; c.moveTo(px, 0); c.lineTo(px, H); }
+  for (let y = Math.ceil(ymin / (sy / 5)) * sy / 5; y <= ymax; y += sy / 5) { const py = Math.round(Y(y)) + .5; c.moveTo(0, py); c.lineTo(W, py); }
+  c.stroke();
+  c.strokeStyle = col('--grid-2'); c.beginPath();
+  for (let x = Math.ceil(xmin / sx) * sx; x <= xmax; x += sx) { const px = Math.round(X(x)) + .5; c.moveTo(px, 0); c.lineTo(px, H); }
+  for (let y = Math.ceil(ymin / sy) * sy; y <= ymax; y += sy) { const py = Math.round(Y(y)) + .5; c.moveTo(0, py); c.lineTo(W, py); }
+  c.stroke();
+  // axes
+  const ax = Math.min(Math.max(X(0), 0), W), ay = Math.min(Math.max(Y(0), 0), H);
+  c.strokeStyle = col('--axis'); c.lineWidth = 1.25; c.beginPath();
+  if (xmin <= 0 && xmax >= 0) { c.moveTo(Math.round(ax) + .5, 0); c.lineTo(Math.round(ax) + .5, H); }
+  if (ymin <= 0 && ymax >= 0) { c.moveTo(0, Math.round(ay) + .5); c.lineTo(W, Math.round(ay) + .5); }
+  c.stroke();
+  // labels
+  c.fillStyle = col('--muted'); c.font = '11px ' + col('--f-num');
+  c.textAlign = 'center'; c.textBaseline = 'top';
+  const ly = Math.min(Math.max(ay + 4, 4), H - 16);
+  for (let x = Math.ceil(xmin / sx) * sx; x <= xmax; x += sx) { if (Math.abs(x) < sx / 2) continue; const px = X(x); if (px < 14 || px > W - 14) continue; c.fillText(tickLab(x), px, ly); }
+  c.textAlign = 'right'; c.textBaseline = 'middle';
+  const lx = ax < 40 ? Math.max(ax + 36, 36) : Math.min(ax - 4, W - 4);
+  if (ax < 40) c.textAlign = 'right';
+  for (let y = Math.ceil(ymin / sy) * sy; y <= ymax; y += sy) { if (Math.abs(y) < sy / 2) continue; const py = Y(y); if (py < 10 || py > H - 10) continue; c.fillText(tickLab(y), lx, py); }
+  // curves
+  const colors = [col('--g1'), col('--g2'), col('--g3')];
+  GD.comp.forEach((f, i) => {
+    if (!f) return;
+    c.strokeStyle = colors[i]; c.lineWidth = 2.2; c.lineJoin = 'round'; c.beginPath();
+    let pen = false, py0 = null;
+    const step = 0.5;
+    for (let px = 0; px <= W; px += step) {
+      const x = xmin + px / W * (xmax - xmin), y = safe(f, x);
+      if (!isFinite(y)) { pen = false; py0 = null; continue; }
+      const py = Y(y);
+      if (pen && py0 !== null && Math.abs(py - py0) > H * 1.5) pen = false;
+      const cy = Math.max(-H, Math.min(2 * H, py));
+      if (!pen) { c.moveTo(px, cy); pen = true; } else c.lineTo(px, cy);
+      py0 = py;
+    }
+    c.stroke();
+  });
+  // marks
+  for (const m of GD.marks) {
+    const px = X(m.x), py = Y(m.y); if (px < -5 || px > W + 5 || py < -5 || py > H + 5) continue;
+    c.beginPath(); c.arc(px, py, 3.6, 0, Math.PI * 2); c.fillStyle = col('--plot'); c.fill(); c.lineWidth = 1.8; c.strokeStyle = m.c; c.stroke();
+  }
+  // hover trace
+  if (GD.hover !== null) {
+    const px = X(GD.hover);
+    c.strokeStyle = col('--axis'); c.lineWidth = 1; c.setLineDash([3, 3]); c.beginPath(); c.moveTo(Math.round(px) + .5, 0); c.lineTo(Math.round(px) + .5, H); c.stroke(); c.setLineDash([]);
+    const parts = ['x = ' + tickLabFull(GD.hover)];
+    GD.comp.forEach((f, i) => {
+      if (!f) return; const y = safe(f, GD.hover);
+      parts.push('f' + '₁₂₃'[i] + ' = ' + (isFinite(y) ? tickLabFull(y) : 'undefined'));
+      if (isFinite(y)) { const py = Y(y); if (py > -5 && py < H + 5) { c.beginPath(); c.arc(px, py, 4.5, 0, Math.PI * 2); c.fillStyle = colors[i]; c.fill(); } }
+    });
+    $('#gread').textContent = parts.join('   ');
+  }
+}
+const tickLabFull = v => fmtNum(v, { sig: 7 }).text.replace('-', '−');
+function gAnalyze() {
+  if ($('#p-graph').hidden || !GD.view) return;
+  const { xmin, xmax } = GD.view; const cs = getComputedStyle(document.documentElement);
+  const colors = ['--g1', '--g2', '--g3'].map(n => cs.getPropertyValue(n).trim());
+  const out = []; GD.marks = [];
+  GD.comp.forEach((f, i) => {
+    if (!f) return;
+    const r = findRoots(f, xmin, xmax, 1500, 12);
+    r.forEach(x => GD.marks.push({ x, y: 0, c: colors[i] }));
+    out.push(`<div class="row"><b>f${'₁₂₃'[i]} zeros</b>${r.length ? r.map(x => chip(x)).join('') : '<span class="empty">none in view</span>'}</div>`);
+  });
+  const pairs = [[0, 1], [0, 2], [1, 2]].filter(([a, b]) => GD.comp[a] && GD.comp[b]);
+  for (const [a, b] of pairs) {
+    const fa = GD.comp[a], fb = GD.comp[b];
+    const r = findRoots(x => fa(x) - fb(x), xmin, xmax, 1500, 12);
+    r.forEach(x => GD.marks.push({ x, y: safe(fa, x), c: cs.getPropertyValue('--axis').trim() }));
+    out.push(`<div class="row"><b>f${'₁₂₃'[a]} = f${'₁₂₃'[b]}</b>${r.length ? r.map(x => chip(x, 'x =')).join('') : '<span class="empty">no crossings in view</span>'}</div>`);
+  }
+  $('#ganal').innerHTML = out.join('');
+  gDraw();
+}
+function zoomAt(px, py, f) {
+  const v = GD.view, wx = v.xmin + px / GD.W * (v.xmax - v.xmin), wy = v.ymax - py / GD.H * (v.ymax - v.ymin);
+  GD.view = { xmin: wx - (wx - v.xmin) * f, xmax: wx + (v.xmax - wx) * f, ymin: wy - (wy - v.ymin) * f, ymax: wy + (v.ymax - wy) * f };
+  gDraw(); clearTimeout(GD.t); GD.t = setTimeout(gAnalyze, 220);
+}
+const ptrs = new Map(); let drag = null;
+gcv.addEventListener('pointerdown', e => {
+  gcv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.offsetX, y: e.offsetY });
+  drag = ptrs.size === 1 ? { x: e.offsetX, y: e.offsetY, view: { ...GD.view }, moved: false } : null;
+});
+gcv.addEventListener('pointermove', e => {
+  const p = ptrs.get(e.pointerId);
+  if (p && ptrs.size === 2) {
+    const o = [...ptrs.entries()].find(([id]) => id !== e.pointerId)[1];
+    const d0 = Math.hypot(p.x - o.x, p.y - o.y), d1 = Math.hypot(e.offsetX - o.x, e.offsetY - o.y);
+    ptrs.set(e.pointerId, { x: e.offsetX, y: e.offsetY });
+    if (d0 > 0 && d1 > 0) zoomAt((e.offsetX + o.x) / 2, (e.offsetY + o.y) / 2, d0 / d1);
+    return;
+  }
+  if (p && drag) {
+    const dx = e.offsetX - drag.x, dy = e.offsetY - drag.y;
+    if (Math.abs(dx) + Math.abs(dy) > 2) drag.moved = true;
+    const v = drag.view, kx = (v.xmax - v.xmin) / GD.W, ky = (v.ymax - v.ymin) / GD.H;
+    GD.view = { xmin: v.xmin - dx * kx, xmax: v.xmax - dx * kx, ymin: v.ymin + dy * ky, ymax: v.ymax + dy * ky };
+    GD.hover = null; gDraw(); return;
+  }
+  const v = GD.view; GD.hover = v.xmin + e.offsetX / GD.W * (v.xmax - v.xmin); gDraw();
+});
+const endPtr = e => {
+  ptrs.delete(e.pointerId);
+  if (drag && !drag.moved) { const v = GD.view; GD.hover = v.xmin + e.offsetX / GD.W * (v.xmax - v.xmin); }
+  if (drag && drag.moved) gAnalyze();
+  drag = null;
+  if (ptrs.size === 1) { const [, q] = [...ptrs.entries()][0]; drag = { x: q.x, y: q.y, view: { ...GD.view }, moved: true }; }
+  if (!ptrs.size) gDraw();
+};
+gcv.addEventListener('pointerup', endPtr); gcv.addEventListener('pointercancel', endPtr);
+gcv.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') { GD.hover = null; $('#gread').textContent = 'Drag to pan · scroll or pinch to zoom · hover to trace'; gDraw(); } });
+gcv.addEventListener('wheel', e => { e.preventDefault(); zoomAt(e.offsetX, e.offsetY, Math.exp(Math.max(-0.5, Math.min(0.5, e.deltaY * 0.0015)))); }, { passive: false });
+$('#gz-in').addEventListener('click', () => zoomAt(GD.W / 2, GD.H / 2, 1 / 1.5));
+$('#gz-out').addEventListener('click', () => zoomAt(GD.W / 2, GD.H / 2, 1.5));
+$('#gz-reset').addEventListener('click', () => { gReset(); gDraw(); gAnalyze(); });
+new ResizeObserver(() => { if (!$('#p-graph').hidden) gDraw(); }).observe($('#gbox'));
+const redrawTheme = () => { if (!$('#p-graph').hidden) gAnalyze(); renderStats(); };
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', redrawTheme);
+new MutationObserver(redrawTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+/* ---------- SOLVE ---------- */
+function solveEq() {
+  const out = $('#eq-out');
+  try {
+    const f = eqFn($('#eq-f').value);
+    let a = evalField($('#eq-a')), b = evalField($('#eq-b')); if (a > b) [a, b] = [b, a];
+    if (!(b > a)) throw new CalcError('The search range needs two different limits');
+    const roots = findRoots(f, a, b, 20000, 40);
+    out.innerHTML = roots.length
+      ? `<div class="lab" style="margin-top:6px">${roots.length} real solution${roots.length > 1 ? 's' : ''} in [${FN(a)}, ${FN(b)}]</div><div class="chips">${roots.map(r => chip(r, 'x =')).join('')}</div>`
+      : `<span class="empty">No real solutions found between ${FN(a)} and ${FN(b)}. Try a wider range.</span>`;
+  } catch (e) { out.innerHTML = `<span class="err-t">${esc(msg(e))}</span>`; }
+}
+const C = { add: (a, b) => [a[0] + b[0], a[1] + b[1]], sub: (a, b) => [a[0] - b[0], a[1] - b[1]], mul: (a, b) => [a[0] * b[0] - a[1] * b[1], a[0] * b[1] + a[1] * b[0]],
+  div: (a, b) => { const d = b[0] * b[0] + b[1] * b[1]; return [(a[0] * b[0] + a[1] * b[1]) / d, (a[1] * b[0] - a[0] * b[1]) / d]; } };
+function polyRoots(coef) {
+  const c = coef.slice(); while (c.length && c[0] === 0) c.shift();
+  const n = c.length - 1; if (n < 1) throw new CalcError('Enter at least two coefficients with a non-zero leading term');
+  const a = c.map(v => v / c[0]);
+  const R = 1 + Math.max(...a.slice(1).map(Math.abs));
+  let z = Array.from({ length: n }, (_, k) => [R * Math.cos(2 * Math.PI * k / n + 0.4), R * Math.sin(2 * Math.PI * k / n + 0.4)]);
+  const P = x => a.reduce((acc, ck) => C.add(C.mul(acc, x), [ck, 0]), [0, 0]);
+  for (let it = 0; it < 3000; it++) {
+    let delta = 0;
+    const nz = z.map((zi, i) => {
+      let den = [1, 0]; z.forEach((zj, j) => { if (j !== i) den = C.mul(den, C.sub(zi, zj)); });
+      const step = C.div(P(zi), den); delta = Math.max(delta, Math.hypot(step[0], step[1]));
+      return C.sub(zi, step);
+    });
+    z = nz; if (delta < 1e-15 * R) break;
+  }
+  return z.map(([re, im]) => {
+    const s = Math.max(1, Math.hypot(re, im));
+    if (Math.abs(im) < 1e-9 * s) im = 0; if (Math.abs(re) < 1e-12 * s) re = 0;
+    return [clean(parseFloat(re.toPrecision(12))), clean(parseFloat(im.toPrecision(12)))];
+  }).sort((p, q) => (Math.abs(p[1]) > 0) - (Math.abs(q[1]) > 0) || p[0] - q[0] || p[1] - q[1]);
+}
+const SUP = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
+function polyText(c) {
+  const n = c.length - 1, parts = [];
+  c.forEach((v, i) => {
+    const p = n - i; if (v === 0) return;
+    const av = Math.abs(v), sgn = v < 0 ? '−' : '+';
+    const coefStr = (av === 1 && p > 0) ? '' : fmtNum(av, { sig: 8 }).text;
+    const xs = p === 0 ? '' : p === 1 ? 'x' : 'x' + String(p).split('').map(d => SUP[d]).join('');
+    parts.push((parts.length ? ' ' + sgn + ' ' : (v < 0 ? '−' : '')) + coefStr + xs);
+  });
+  return (parts.join('') || '0') + ' = 0';
+}
+function solvePoly() {
+  const out = $('#po-out');
+  try {
+    const raw = $('#po-c').value.split(/[,;]+/).map(s => s.trim()).filter(Boolean);
+    const c = raw.map(s => clean(compile(s)({}, 'RAD')));
+    if (c.length > 21) throw new CalcError('Up to degree 20 is supported');
+    while (c.length && c[0] === 0) c.shift();
+    $('#po-show').textContent = c.length ? polyText(c) : '';
+    const r = polyRoots(c);
+    out.innerHTML = '<div class="chips">' + r.map(([re, im], k) => {
+      if (im === 0) return chip(re, 'x' + '₁₂₃₄₅₆₇₈₉'[k % 9] + ' =');
+      const t = FN(re) + (im < 0 ? ' − ' : ' + ') + FN(Math.abs(im)) + 'i';
+      return `<span class="chip" style="cursor:default"><small>x${'₁₂₃₄₅₆₇₈₉'[k % 9]} =</small>${t}</span>`;
+    }).join('') + '</div>';
+  } catch (e) { $('#po-show').textContent = ''; out.innerHTML = `<span class="err-t">${esc(msg(e))}</span>`; }
+}
+const LS = { n: 3, A: [[2, 1, -1, 8], [-3, -1, 2, -11], [-2, 1, 2, -3]] };
+function lsGrid() {
+  const n = LS.n, g = $('#ls-grid');
+  while (LS.A.length < 4) LS.A.push([0, 0, 0, 0, 0]);
+  g.style.gridTemplateColumns = `repeat(${n}, minmax(3.6em,1fr)) minmax(4.4em,1fr)`;
+  const names = ['x', 'y', 'z', 'w'];
+  let h = names.slice(0, n).map(v => `<div class="vh">${v}</div>`).join('') + '<div class="vh bar">=</div>';
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j <= n; j++) {
+      const val = j < n ? (LS.A[i][j] ?? 0) : (LS.A[i][LS.A[i].length - 1] ?? 0);
+      h += `<div${j === n ? ' class="bar"' : ''}><input class="in" data-r="${i}" data-c="${j === n ? 'b' : j}" value="${esc(String(val))}" aria-label="${j === n ? 'Constant, row ' + (i + 1) : names[j] + ' coefficient, row ' + (i + 1)}"></div>`;
+    }
+  }
+  g.innerHTML = h;
+  $$('#ls-n button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.n === n));
+  solveLS();
+}
+function readLS() {
+  const n = LS.n, A = [], b = [];
+  for (let i = 0; i < n; i++) { A.push([]); for (let j = 0; j < n; j++) A[i].push(clean(compile($(`#ls-grid [data-r="${i}"][data-c="${j}"]`).value || '0')({}, 'RAD'))); b.push(clean(compile($(`#ls-grid [data-r="${i}"][data-c="b"]`).value || '0')({}, 'RAD'))); }
+  return { A, b };
+}
+function solveLS() {
+  const out = $('#ls-out');
+  try {
+    const { A, b } = readLS(), n = LS.n;
+    const M = A.map((r, i) => [...r, b[i]]); let det = 1, singular = false;
+    for (let col = 0; col < n; col++) {
+      let piv = col; for (let r = col + 1; r < n; r++) if (Math.abs(M[r][col]) > Math.abs(M[piv][col])) piv = r;
+      if (Math.abs(M[piv][col]) < 1e-12) { singular = true; det = 0; break; }
+      if (piv !== col) { [M[piv], M[col]] = [M[col], M[piv]]; det = -det; }
+      det *= M[col][col];
+      for (let r = col + 1; r < n; r++) { const f = M[r][col] / M[col][col]; for (let k = col; k <= n; k++) M[r][k] -= f * M[col][k]; }
+    }
+    if (singular) { out.innerHTML = `<span class="err-t">The coefficient matrix is singular (determinant 0), so there is no unique solution.</span>`; return; }
+    const x = Array(n).fill(0);
+    for (let i = n - 1; i >= 0; i--) { let s = M[i][n]; for (let k = i + 1; k < n; k++) s -= M[i][k] * x[k]; x[i] = s / M[i][i]; }
+    const names = ['x', 'y', 'z', 'w'];
+    out.innerHTML = `<div class="chips" style="margin-top:4px">${x.map((v, i) => chip(clean(parseFloat(v.toPrecision(13))), names[i] + ' =')).join('')}</div><p class="hint">Determinant ${FN(clean(det))}</p>`;
+  } catch (e) { out.innerHTML = `<span class="err-t">${esc(msg(e))}</span>`; }
+}
+$('#ls-n').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  try { const { A, b: bb } = readLS(); A.forEach((r, i) => { LS.A[i] = [...r, bb[i]]; }); } catch (er) {}
+  const nn = +b.dataset.n;
+  LS.A = LS.A.map(r => { const row = r.slice(0, -1), last = r[r.length - 1]; while (row.length < nn) row.push(0); return [...row.slice(0, nn), last]; });
+  LS.n = nn; lsGrid();
+});
+$('#ls-grid').addEventListener('input', solveLS);
+$('#eq-f').addEventListener('input', solveEq); $('#eq-a').addEventListener('input', solveEq); $('#eq-b').addEventListener('input', solveEq);
+$('#po-c').addEventListener('input', solvePoly);
+
+/* ---------- CALCULUS ---------- */
+function calcDeriv() {
+  const out = $('#d-out');
+  try {
+    const fn = compile($('#d-f').value, ['x']), f = x => fn({ x }, 'RAD'), a = evalField($('#d-a'));
+    const h = 1e-3 * Math.max(1, Math.abs(a));
+    const f0 = f(a), p1 = f(a + h), m1 = f(a - h), p2 = f(a + 2 * h), m2 = f(a - 2 * h);
+    const d1 = clean(parseFloat(((-p2 + 8 * p1 - 8 * m1 + m2) / (12 * h)).toPrecision(10)));
+    const d2 = clean(parseFloat(((-p2 + 16 * p1 - 30 * f0 + 16 * m1 - m2) / (12 * h * h)).toPrecision(8)));
+    if (![f0, d1, d2].every(isFinite)) throw new CalcError('f is not differentiable here');
+    const b = clean(f0 - d1 * a);
+    out.innerHTML = `<div class="chips">${chip(clean(f0), 'f(a) =')}${chip(d1, "f′(a) =")}${chip(d2, "f″(a) =")}</div>
+      <p class="hint">Tangent line: y = ${FN(d1)}x ${b < 0 ? '−' : '+'} ${FN(Math.abs(b))}</p>`;
+  } catch (e) { out.innerHTML = `<span class="err-t">${esc(msg(e))}</span>`; }
+}
+function integrate(f, a, b) {
+  let evals = 0, capped = false;
+  const g = x => { evals++; let y = safe(f, x); if (!isFinite(y)) { const d = (b - a) * 1e-10; y = safe(f, x === a ? x + d : x - d); } if (!isFinite(y)) throw new CalcError('f is undefined inside the interval'); return y; };
+  function rec(a, b, fa, fb, fc, S, eps, d) {
+    const c = (a + b) / 2, l = (a + c) / 2, r = (c + b) / 2, fl = g(l), fr = g(r);
+    const L = (c - a) / 6 * (fa + 4 * fl + fc), R = (b - c) / 6 * (fc + 4 * fr + fb);
+    if (evals > 400000) { capped = true; return L + R; }
+    if (d <= 0 || Math.abs(L + R - S) <= 15 * eps) return L + R + (L + R - S) / 15;
+    return rec(a, c, fa, fc, fl, L, eps / 2, d - 1) + rec(c, b, fc, fb, fr, R, eps / 2, d - 1);
+  }
+  const fa = g(a), fb = g(b), fc = g((a + b) / 2);
+  const v = rec(a, b, fa, fb, fc, (b - a) / 6 * (fa + 4 * fc + fb), 1e-11, 48);
+  return { v, capped };
+}
+function calcInt() {
+  const out = $('#i-out');
+  try {
+    const fn = compile($('#i-f').value, ['x']), f = x => fn({ x }, 'RAD');
+    const a = evalField($('#i-a')), b = evalField($('#i-b'));
+    if (!isFinite(a) || !isFinite(b)) throw new CalcError('Limits must be finite numbers');
+    let r = a === b ? { v: 0 } : a < b ? integrate(f, a, b) : (o => ({ v: -o.v, capped: o.capped }))(integrate(f, b, a));
+    const v = clean(parseFloat(r.v.toPrecision(11)));
+    out.innerHTML = `<div class="big" style="margin-top:4px">∫ = ${chip(v)}</div>${r.capped ? '<p class="hint">The integrand varies sharply; the result may be less accurate.</p>' : ''}`;
+  } catch (e) { out.innerHTML = `<span class="err-t">${esc(msg(e))}</span>`; }
+}
+let sKind = 'sum';
+function calcSeries() {
+  const out = $('#s-out');
+  try {
+    const fn = compile($('#s-f').value, ['n', 'x']);
+    const a = Math.round(evalField($('#s-a'))), b = Math.round(evalField($('#s-b')));
+    if (b - a > 5e6) throw new CalcError('Limit the range to 5 million terms');
+    let acc = sKind === 'sum' ? 0 : 1, comp = 0;
+    for (let n = a; n <= b; n++) {
+      const t = fn({ n, x: n }, 'RAD');
+      if (sKind === 'sum') { const y = t - comp, s = acc + y; comp = (s - acc) - y; acc = s; } else acc *= t;
+      if (!isFinite(acc)) break;
+    }
+    const sym = sKind === 'sum' ? 'Σ' : 'Π', terms = Math.max(0, b - a + 1);
+    out.innerHTML = `<div class="big" style="margin-top:4px">${sym} = ${chip(clean(acc))}</div><p class="hint">${terms.toLocaleString()} term${terms === 1 ? '' : 's'}, n = ${a} to ${b}. Sums use compensated addition.</p>`;
+  } catch (e) { out.innerHTML = `<span class="err-t">${esc(msg(e))}</span>`; }
+}
+$('#s-kind').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; sKind = b.dataset.k; $$('#s-kind button').forEach(x => x.setAttribute('aria-pressed', x === b)); calcSeries(); });
+['#d-f', '#d-a'].forEach(s => $(s).addEventListener('input', calcDeriv));
+['#i-f', '#i-a', '#i-b'].forEach(s => $(s).addEventListener('input', calcInt));
+['#s-f', '#s-a', '#s-b'].forEach(s => $(s).addEventListener('input', calcSeries));
+
+/* ---------- STATISTICS ---------- */
+const ST = { mode: 1, d1: '12, 15, 11, 19, 22, 15, 18, 25, 14, 16, 20, 15, 41', d2: '1, 52\n2, 55\n3, 61\n4, 64\n5, 70\n6, 73\n7, 79' };
+const stNum = s => clean(compile(s)({}, 'RAD'));
+const quant = (s, lo, hi) => { const a = s.slice(lo, hi), n = a.length; return n % 2 ? a[(n - 1) / 2] : (a[n / 2 - 1] + a[n / 2]) / 2; };
+const kv = (k, v) => `<div><dt>${k}</dt><dd data-ins="${esc(insertable(v))}" title="Insert into calculator">${typeof v === 'number' ? FN(clean(v)) : v}</dd></div>`;
+function renderStats() {
+  const out = $('#st-out'), er = $('#st-err'), plot = $('#st-plot'); er.textContent = '';
+  const cs = getComputedStyle(document.documentElement), col = n => cs.getPropertyValue(n).trim();
+  try {
+    if (ST.mode === 1) {
+      const toks = $('#st-data').value.split(/[\s,;]+/).filter(Boolean);
+      const xs = toks.map(t => { try { return stNum(t); } catch (e) { throw new CalcError('Could not read “' + t + '”'); } });
+      const n = xs.length; if (!n) { out.innerHTML = ''; plot.innerHTML = ''; return; }
+      const s = xs.slice().sort((a, b) => a - b), sum = xs.reduce((a, b) => a + b, 0), mean = sum / n;
+      const ss = xs.reduce((a, x) => a + (x - mean) ** 2, 0), vp = ss / n, vs = n > 1 ? ss / (n - 1) : NaN;
+      const med = quant(s, 0, n), half = Math.floor(n / 2);
+      const q1 = n > 1 ? quant(s, 0, half) : s[0], q3 = n > 1 ? quant(s, n - half, n) : s[0];
+      const freq = new Map(); xs.forEach(x => freq.set(x, (freq.get(x) || 0) + 1));
+      const mx = Math.max(...freq.values()), modes = mx > 1 ? [...freq].filter(([, f]) => f === mx).map(([v]) => v) : [];
+      const sdp = Math.sqrt(vp), sds = Math.sqrt(vs);
+      const skew = n > 2 && sds > 0 ? (n / ((n - 1) * (n - 2))) * xs.reduce((a, x) => a + ((x - mean) / sds) ** 3, 0) : NaN;
+      const gm = s[0] > 0 ? Math.exp(xs.reduce((a, x) => a + Math.log(x), 0) / n) : NaN;
+      const hm = xs.every(x => x !== 0) ? n / xs.reduce((a, x) => a + 1 / x, 0) : NaN;
+      const iqr = q3 - q1, lf = q1 - 1.5 * iqr, uf = q3 + 1.5 * iqr;
+      const outl = s.filter(x => x < lf || x > uf);
+      const na = v => isFinite(v) ? v : '—';
+      out.innerHTML = [kv('n', n), kv('Σx', sum), kv('Σx²', xs.reduce((a, x) => a + x * x, 0)), kv('Mean x̄', mean), kv('Median', med),
+        kv('Mode', modes.length ? modes.map(m => FN(m)).join(', ') : 'none'), kv('Min', s[0]), kv('Max', s[n - 1]), kv('Range', s[n - 1] - s[0]),
+        kv('Q1', q1), kv('Q3', q3), kv('IQR', iqr), kv('σ population', sdp), kv('s sample', na(sds)), kv('σ² population', vp), kv('s² sample', na(vs)),
+        kv('Std. error', na(sds / Math.sqrt(n))), kv('Coeff. of variation', isFinite(sds) && mean ? FN(clean(sds / Math.abs(mean) * 100)) + ' %' : '—'),
+        kv('Skewness', na(skew)), kv('Geometric mean', na(gm)), kv('Harmonic mean', na(hm)),
+        kv('Outliers (1.5 IQR)', outl.length ? outl.map(v => FN(v)).join(', ') : 'none')].join('');
+      // box plot
+      const lo = s[0], hi = s[n - 1], span = hi - lo || 1, W = 600, P = 22, sx = v => P + (v - lo) / span * (W - 2 * P);
+      const inl = s.filter(x => x >= lf && x <= uf), wl = inl[0] ?? lo, wh = inl[inl.length - 1] ?? hi;
+      const ticks = []; const st = niceStep(span / 6); for (let t = Math.ceil(lo / st) * st; t <= hi + 1e-9; t += st) ticks.push(t);
+      plot.innerHTML = `<svg viewBox="0 0 ${W} 96" role="img" aria-label="Box plot of the data">
+        <line x1="${sx(wl)}" x2="${sx(q1)}" y1="38" y2="38" stroke="${col('--axis')}" stroke-width="1.5"/>
+        <line x1="${sx(q3)}" x2="${sx(wh)}" y1="38" y2="38" stroke="${col('--axis')}" stroke-width="1.5"/>
+        <line x1="${sx(wl)}" x2="${sx(wl)}" y1="28" y2="48" stroke="${col('--axis')}" stroke-width="1.5"/>
+        <line x1="${sx(wh)}" x2="${sx(wh)}" y1="28" y2="48" stroke="${col('--axis')}" stroke-width="1.5"/>
+        <rect x="${sx(q1)}" y="20" width="${Math.max(1, sx(q3) - sx(q1))}" height="36" fill="${col('--accent-soft')}" stroke="${col('--accent')}" stroke-width="1.5" rx="3"/>
+        <line x1="${sx(med)}" x2="${sx(med)}" y1="20" y2="56" stroke="${col('--accent')}" stroke-width="2.5"/>
+        <path d="M${sx(mean)} 61 l5 7 h-10 z" fill="${col('--g2')}"/>
+        ${outl.map(v => `<circle cx="${sx(v)}" cy="38" r="4" fill="${col('--plot')}" stroke="${col('--g3')}" stroke-width="1.8"/>`).join('')}
+        <line x1="${P}" x2="${W - P}" y1="76" y2="76" stroke="${col('--grid-2')}"/>
+        ${ticks.map(t => `<line x1="${sx(t)}" x2="${sx(t)}" y1="73" y2="79" stroke="${col('--axis')}"/><text x="${sx(t)}" y="92" text-anchor="middle" font-size="11" font-family="${esc(col('--f-num'))}" fill="${col('--muted')}">${tickLab(t)}</text>`).join('')}
+        <text x="${W - P}" y="12" text-anchor="end" font-size="11" font-family="${esc(col('--f-ui'))}" fill="${col('--muted')}">box Q1–Q3 · bar median · ▲ mean${outl.length ? ' · ○ outlier' : ''}</text>
+      </svg>`;
+    } else {
+      const rows = $('#st-data').value.split(/\n+/).map(l => l.trim()).filter(Boolean);
+      const pts = rows.map((l, i) => { const p = l.split(/[\s,;\t]+/).filter(Boolean); if (p.length !== 2) throw new CalcError('Line ' + (i + 1) + ' needs exactly two values: x, y'); return p.map(stNum); });
+      const n = pts.length; if (n < 2) { out.innerHTML = ''; plot.innerHTML = ''; if (n) er.textContent = 'Enter at least two points'; return; }
+      const mx = pts.reduce((a, p) => a + p[0], 0) / n, my = pts.reduce((a, p) => a + p[1], 0) / n;
+      let sxx = 0, syy = 0, sxy = 0; pts.forEach(([x, y]) => { sxx += (x - mx) ** 2; syy += (y - my) ** 2; sxy += (x - mx) * (y - my); });
+      if (sxx === 0) throw new CalcError('All x values are equal, so no line can be fitted');
+      const b = sxy / sxx, a = my - b * mx, r = syy ? sxy / Math.sqrt(sxx * syy) : NaN;
+      let px = NaN; try { px = stNum($('#st-x').value); } catch (e) {}
+      const na = v => isFinite(v) ? v : '—';
+      out.innerHTML = [kv('n', n), kv('x̄', mx), kv('ȳ', my), kv('sₓ', Math.sqrt(sxx / (n - 1))), kv('sᵧ', Math.sqrt(syy / (n - 1))),
+        kv('Slope b', b), kv('Intercept a', a), kv('r', na(r)), kv('r²', na(r * r)), kv('Covariance (sample)', sxy / (n - 1)),
+        kv('ŷ at x = ' + (isFinite(px) ? FN(px) : '?'), isFinite(px) ? a + b * px : '—')].join('') +
+        `<div style="grid-column:1/-1"><dt>Fitted line</dt><dd>y = ${FN(clean(a))} ${b < 0 ? '−' : '+'} ${FN(clean(Math.abs(b)))}x</dd></div>`;
+      const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+      let x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys, a + b * x0, a + b * x1), y1 = Math.max(...ys, a + b * x0, a + b * x1);
+      const pxr = (x1 - x0) * 0.06 || 1, pyr = (y1 - y0) * 0.1 || 1; x0 -= pxr; x1 += pxr; y0 -= pyr; y1 += pyr;
+      const W = 600, H = 260, L = 46, B = 26, T = 10, Rr = 12, X = x => L + (x - x0) / (x1 - x0) * (W - L - Rr), Y = y => H - B - (y - y0) / (y1 - y0) * (H - B - T);
+      const tx = niceStep((x1 - x0) / 6), ty = niceStep((y1 - y0) / 5); let g = '';
+      for (let t = Math.ceil(x0 / tx) * tx; t <= x1; t += tx) g += `<line x1="${X(t)}" x2="${X(t)}" y1="${T}" y2="${H - B}" stroke="${col('--grid')}"/><text x="${X(t)}" y="${H - 8}" text-anchor="middle" font-size="11" font-family="${esc(col('--f-num'))}" fill="${col('--muted')}">${tickLab(t)}</text>`;
+      for (let t = Math.ceil(y0 / ty) * ty; t <= y1; t += ty) g += `<line x1="${L}" x2="${W - Rr}" y1="${Y(t)}" y2="${Y(t)}" stroke="${col('--grid')}"/><text x="${L - 6}" y="${Y(t) + 4}" text-anchor="end" font-size="11" font-family="${esc(col('--f-num'))}" fill="${col('--muted')}">${tickLab(t)}</text>`;
+      plot.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Scatter plot with fitted line">${g}
+        <line x1="${X(x0)}" y1="${Y(a + b * x0)}" x2="${X(x1)}" y2="${Y(a + b * x1)}" stroke="${col('--g2')}" stroke-width="2"/>
+        ${pts.map(([x, y]) => `<circle cx="${X(x)}" cy="${Y(y)}" r="4.5" fill="${col('--accent')}"/>`).join('')}</svg>`;
+    }
+  } catch (e) { er.textContent = msg(e); out.innerHTML = ''; plot.innerHTML = ''; }
+}
+function setStMode(m) {
+  if (ST.mode === 1) ST.d1 = $('#st-data').value; else ST.d2 = $('#st-data').value;
+  ST.mode = m; $('#st-data').value = m === 1 ? ST.d1 : ST.d2;
+  $$('#st-mode button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.m === m));
+  $('#st-pred').hidden = m === 1;
+  $('#st-sub').innerHTML = m === 1 ? 'Example data below. Separate values with commas, spaces or new lines; expressions like <code>1/3</code> work. Tap any statistic to insert it.'
+    : 'Example data below: one <code>x, y</code> pair per line. Least-squares linear regression.';
+  renderStats();
+}
+$('#st-mode').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setStMode(+b.dataset.m); });
+$('#st-data').addEventListener('input', renderStats); $('#st-x').addEventListener('input', renderStats);
+
+/* ---------- UNITS ---------- */
+const UNITS = {
+  Length: { d: [9, 5], u: [['nm', 'nanometre', 1e-9], ['µm', 'micrometre', 1e-6], ['mm', 'millimetre', 1e-3], ['cm', 'centimetre', 1e-2], ['m', 'metre', 1], ['km', 'kilometre', 1e3], ['in', 'inch', 0.0254], ['ft', 'foot', 0.3048], ['yd', 'yard', 0.9144], ['mi', 'mile', 1609.344], ['nmi', 'nautical mile', 1852], ['au', 'astronomical unit', 149597870700], ['ly', 'light-year', 9460730472580800], ['pc', 'parsec', 3.0856775814913673e16]] },
+  Mass: { d: [6, 3], u: [['µg', 'microgram', 1e-9], ['mg', 'milligram', 1e-6], ['g', 'gram', 1e-3], ['kg', 'kilogram', 1], ['t', 'tonne', 1000], ['oz', 'ounce', 0.028349523125], ['lb', 'pound', 0.45359237], ['st', 'stone', 6.35029318], ['ton', 'US short ton', 907.18474], ['long ton', 'UK long ton', 1016.0469088], ['ct', 'carat', 2e-4], ['Da', 'dalton', 1.6605390666e-27]] },
+  Temperature: { d: [1, 0], temp: true, u: [['°C', 'Celsius'], ['°F', 'Fahrenheit'], ['K', 'kelvin'], ['°R', 'Rankine']] },
+  Area: { d: [8, 3], u: [['mm²', 'square millimetre', 1e-6], ['cm²', 'square centimetre', 1e-4], ['m²', 'square metre', 1], ['ha', 'hectare', 1e4], ['km²', 'square kilometre', 1e6], ['in²', 'square inch', 6.4516e-4], ['ft²', 'square foot', 0.09290304], ['yd²', 'square yard', 0.83612736], ['ac', 'acre', 4046.8564224], ['mi²', 'square mile', 2589988.110336]] },
+  Volume: { d: [11, 1], u: [['mL', 'millilitre', 1e-6], ['L', 'litre', 1e-3], ['m³', 'cubic metre', 1], ['in³', 'cubic inch', 1.6387064e-5], ['ft³', 'cubic foot', 0.028316846592], ['tsp', 'US teaspoon', 4.92892159375e-6], ['tbsp', 'US tablespoon', 1.478676478125e-5], ['fl oz', 'US fluid ounce', 2.95735295625e-5], ['cup', 'US cup', 2.365882365e-4], ['pt', 'US pint', 4.73176473e-4], ['qt', 'US quart', 9.46352946e-4], ['gal', 'US gallon', 3.785411784e-3], ['imp fl oz', 'imperial fluid ounce', 2.84130625e-5], ['imp pt', 'imperial pint', 5.6826125e-4], ['imp gal', 'imperial gallon', 4.54609e-3]] },
+  Speed: { d: [2, 1], u: [['m/s', 'metre per second', 1], ['km/h', 'kilometre per hour', 1 / 3.6], ['mph', 'mile per hour', 0.44704], ['kn', 'knot', 1852 / 3600], ['ft/s', 'foot per second', 0.3048], ['Mach', 'Mach (ISA sea level)', 340.294], ['c', 'speed of light', 299792458]] },
+  Time: { d: [5, 4], u: [['ns', 'nanosecond', 1e-9], ['µs', 'microsecond', 1e-6], ['ms', 'millisecond', 1e-3], ['s', 'second', 1], ['min', 'minute', 60], ['h', 'hour', 3600], ['d', 'day', 86400], ['wk', 'week', 604800], ['yr', 'Julian year (365.25 d)', 31557600]] },
+  Energy: { d: [4, 1], u: [['J', 'joule', 1], ['kJ', 'kilojoule', 1e3], ['MJ', 'megajoule', 1e6], ['cal', 'thermochemical calorie', 4.184], ['kcal', 'kilocalorie', 4184], ['Wh', 'watt-hour', 3600], ['kWh', 'kilowatt-hour', 3.6e6], ['eV', 'electronvolt', 1.602176634e-19], ['BTU', 'British thermal unit (IT)', 1055.05585262], ['ft·lbf', 'foot-pound force', 1.3558179483314004], ['erg', 'erg', 1e-7]] },
+  Power: { d: [3, 1], u: [['W', 'watt', 1], ['kW', 'kilowatt', 1e3], ['MW', 'megawatt', 1e6], ['hp', 'mechanical horsepower', 745.6998715822702], ['PS', 'metric horsepower', 735.49875], ['BTU/h', 'BTU per hour', 0.29307107017222]] },
+  Pressure: { d: [4, 6], u: [['Pa', 'pascal', 1], ['hPa', 'hectopascal', 100], ['kPa', 'kilopascal', 1e3], ['MPa', 'megapascal', 1e6], ['bar', 'bar', 1e5], ['atm', 'standard atmosphere', 101325], ['psi', 'pound per square inch', 6894.757293168361], ['mmHg', 'millimetre of mercury', 133.322387415], ['inHg', 'inch of mercury', 3386.389], ['Torr', 'torr', 101325 / 760]] },
+  Data: { d: [6, 7], u: [['bit', 'bit', 0.125], ['B', 'byte', 1], ['kB', 'kilobyte', 1e3], ['KiB', 'kibibyte', 1024], ['MB', 'megabyte', 1e6], ['MiB', 'mebibyte', 1048576], ['GB', 'gigabyte', 1e9], ['GiB', 'gibibyte', 1073741824], ['TB', 'terabyte', 1e12], ['TiB', 'tebibyte', 1099511627776]] },
+  Angle: { d: [0, 1], u: [['°', 'degree', Math.PI / 180], ['rad', 'radian', 1], ['grad', 'gradian', Math.PI / 200], ['′', 'arcminute', Math.PI / 10800], ['″', 'arcsecond', Math.PI / 648000], ['turn', 'turn', 2 * Math.PI]] },
+  Frequency: { d: [4, 0], u: [['Hz', 'hertz', 1], ['kHz', 'kilohertz', 1e3], ['MHz', 'megahertz', 1e6], ['GHz', 'gigahertz', 1e9], ['rpm', 'revolution per minute', 1 / 60]] },
+};
+const tempToK = (v, u) => u === '°C' ? v + 273.15 : u === '°F' ? (v - 32) * 5 / 9 + 273.15 : u === '°R' ? v * 5 / 9 : v;
+const tempFromK = (k, u) => u === '°C' ? k - 273.15 : u === '°F' ? (k - 273.15) * 9 / 5 + 32 : u === '°R' ? k * 9 / 5 : k;
+function convertVal(cat, v, from, to) {
+  const C = UNITS[cat];
+  if (C.temp) return tempFromK(tempToK(v, C.u[from][0]), C.u[to][0]);
+  return v * C.u[from][2] / C.u[to][2];
+}
+const cvCat = $('#cv-cat'), cvFrom = $('#cv-from'), cvTo = $('#cv-to');
+cvCat.innerHTML = Object.keys(UNITS).map(k => `<option>${k}</option>`).join('');
+cvCat.value = 'Length';
+function cvFill() {
+  const C = UNITS[cvCat.value];
+  const opts = C.u.map((u, i) => `<option value="${i}">${esc(u[0])} · ${esc(u[1])}</option>`).join('');
+  cvFrom.innerHTML = opts; cvTo.innerHTML = opts; cvFrom.value = C.d[0]; cvTo.value = C.d[1];
+  if (cvCat.value === 'Temperature' && $('#cv-v').value === '26.2') $('#cv-v').value = '98.6';
+  cvRun();
+}
+function cvRun() {
+  const out = $('#cv-out'), tbl = $('#cv-all'), cat = cvCat.value, C = UNITS[cat];
+  try {
+    const v = stNum($('#cv-v').value), f = +cvFrom.value, t = +cvTo.value;
+    const r = clean(convertVal(cat, v, f, t));
+    if (C.temp && tempToK(v, C.u[f][0]) < 0) throw new CalcError('That is below absolute zero');
+    out.innerHTML = `${FN(v)} ${esc(C.u[f][0])} = ${chip(r)} ${esc(C.u[t][0])}`;
+    tbl.innerHTML = C.u.map((u, i) => `<tr class="${i === t ? 'cur' : ''}"><td>${esc(u[1])}</td><td>${FN(clean(convertVal(cat, v, f, i)))} ${esc(u[0])}</td></tr>`).join('');
+  } catch (e) { out.innerHTML = `<span class="err-t">${esc(msg(e))}</span>`; tbl.innerHTML = ''; }
+}
+cvCat.addEventListener('change', cvFill); cvFrom.addEventListener('change', cvRun); cvTo.addEventListener('change', cvRun); $('#cv-v').addEventListener('input', cvRun);
+$('#cv-swap').addEventListener('click', () => { const a = cvFrom.value; cvFrom.value = cvTo.value; cvTo.value = a; cvRun(); });
+
+/* ---------- BASE-N ---------- */
+const BN = { base: 16, w: 32, signed: true, A: 0xC0FFEEn };
+const mask = () => (1n << BigInt(BN.w)) - 1n;
+const norm = v => v & mask();
+const signedOf = u => (BN.signed && ((u >> BigInt(BN.w - 1)) & 1n)) ? u - (1n << BigInt(BN.w)) : u;
+const DIG = { 16: /^[0-9a-f]+$/i, 10: /^[0-9]+$/, 8: /^[0-7]+$/, 2: /^[01]+$/ };
+const PFX = { 16: '0x', 10: '', 8: '0o', 2: '0b' };
+const BNAME = { 16: 'hexadecimal', 10: 'decimal', 8: 'octal', 2: 'binary' };
+function bnParse(s, base) {
+  s = s.trim().replace(/[\s_]/g, '').replace(/^(0x|0o|0b)/i, '');
+  let neg = false; if (s.startsWith('-')) { neg = true; s = s.slice(1); }
+  if (!s) throw new CalcError('Enter a value');
+  if (!DIG[base].test(s)) throw new CalcError('“' + s + '” is not a valid ' + BNAME[base] + ' number');
+  const v = BigInt(PFX[base] + s); return norm(neg ? -v : v);
+}
+const grp = (s, n) => s.replace(new RegExp(`\\B(?=(.{${n}})+$)`, 'g'), ' ');
+const bnStr = (u, base) => base === 10 ? signedOf(u).toString() : u.toString(base).toUpperCase();
+function bnRender(updateField = true) {
+  const u = BN.A;
+  if (updateField) $('#b-a').value = bnStr(u, BN.base);
+  $('#b-out').innerHTML = [[16, 'HEX', grp(u.toString(16).toUpperCase(), 4)], [10, 'DEC', signedOf(u).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')],
+    [8, 'OCT', grp(u.toString(8), 3)], [2, 'BIN', grp(u.toString(2), 4)]].map(([b, n, s]) => `<div><b>${n}</b><span>${s}</span></div>`).join('') +
+    (BN.signed ? '' : '');
+  let h = '';
+  const perRow = Math.min(16, BN.w);
+  for (let top = BN.w - 1; top >= 0; top -= perRow) {
+    h += `<div class="bitrow"><small>${top}</small><div class="nibs">`;
+    for (let nb = top; nb > top - perRow; nb -= 4) {
+      h += '<div class="nib">';
+      for (let i = nb; i > nb - 4; i--) { const on = (u >> BigInt(i)) & 1n; h += `<button type="button" class="bit${on ? ' one' : ''}" data-bit="${i}" aria-label="Bit ${i}, ${on ? 'on' : 'off'}">${on}</button>`; }
+      h += '</div>';
+    }
+    h += '</div></div>';
+  }
+  $('#b-bits').innerHTML = h;
+  $$('#b-base button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.b === BN.base));
+}
+$('#b-bits').addEventListener('click', e => { const b = e.target.closest('[data-bit]'); if (!b) return; BN.A = norm(BN.A ^ (1n << BigInt(+b.dataset.bit))); $('#b-err').textContent = ''; bnRender(); });
+$('#b-a').addEventListener('input', () => { try { BN.A = bnParse($('#b-a').value, BN.base); $('#b-err').textContent = ''; bnRender(false); } catch (e) { $('#b-err').textContent = msg(e); } });
+$('#b-base').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const old = BN.base; BN.base = +b.dataset.b; try { const B = bnParse($('#b-b').value, old); $('#b-b').value = bnStr(B, BN.base); } catch (er) {} bnRender(); });
+$('#b-w').addEventListener('change', e => { const s = signedOf(BN.A); BN.w = +e.target.value; BN.A = norm(s); bnRender(); });
+$('#b-signed').addEventListener('change', e => { BN.signed = e.target.checked; bnRender(); });
+const OPS = [['AND', (a, b) => a & b], ['OR', (a, b) => a | b], ['XOR', (a, b) => a ^ b], ['NAND', (a, b) => ~(a & b)], ['NOR', (a, b) => ~(a | b)], ['NOT A', a => ~a], ['NEG A', a => -a],
+  ['A << B', (a, b) => a << b], ['A >> B', (a, b) => a >> b], ['ROL', (a, b) => { const w = BigInt(BN.w), s = b % w; return (a << s) | (a >> (w - s)); }], ['ROR', (a, b) => { const w = BigInt(BN.w), s = b % w; return (a >> s) | (a << (w - s)); }],
+  ['A + B', (a, b) => a + b], ['A − B', (a, b) => a - b], ['A × B', (a, b) => a * b], ['A ÷ B', (a, b) => { if (b === 0n) throw new CalcError('Division by zero'); return a / b; }], ['A mod B', (a, b) => { if (b === 0n) throw new CalcError('Division by zero'); return a % b; }]];
+$('#b-ops').innerHTML = OPS.map(([n], i) => `<button type="button" class="btn ghost sm" data-op="${i}">${n}</button>`).join('');
+$('#b-ops').addEventListener('click', e => {
+  const b = e.target.closest('[data-op]'); if (!b) return;
+  const [name, fn] = OPS[+b.dataset.op];
+  try {
+    const shiftOp = /<<|>>|ROL|ROR/.test(name), arith = /[+−×÷]|mod/.test(name);
+    const B = fn.length > 1 ? bnParse($('#b-b').value, BN.base) : 0n;
+    const a = arith ? signedOf(BN.A) : BN.A, bb = arith ? signedOf(B) : (shiftOp ? B : B);
+    if (shiftOp && B >= BigInt(BN.w) && /<<|>>/.test(name)) { BN.A = 0n; }
+    else BN.A = norm(fn(a, bb));
+    $('#b-err').textContent = ''; $('#b-msg').textContent = name + ' applied. Results replace A; B is read in the same base as A.';
+    bnRender();
+  } catch (er) { $('#b-err').textContent = msg(er); }
+});
+
+/* ---------- CONSTANTS ---------- */
+const CONST = [
+  ['c', 'Speed of light in vacuum', '299792458', 'm s⁻¹', 1], ['h', 'Planck constant', '6.62607015e-34', 'J s', 1], ['ħ', 'Reduced Planck constant', '1.054571817e-34', 'J s', 0],
+  ['e', 'Elementary charge', '1.602176634e-19', 'C', 1], ['k_B', 'Boltzmann constant', '1.380649e-23', 'J K⁻¹', 1], ['N_A', 'Avogadro constant', '6.02214076e23', 'mol⁻¹', 1],
+  ['R', 'Molar gas constant', '8.314462618', 'J mol⁻¹ K⁻¹', 0], ['F', 'Faraday constant', '96485.33212', 'C mol⁻¹', 0], ['σ', 'Stefan–Boltzmann constant', '5.670374419e-8', 'W m⁻² K⁻⁴', 0],
+  ['G', 'Newtonian gravitational constant', '6.67430e-11', 'm³ kg⁻¹ s⁻²', 0], ['g₀', 'Standard acceleration of gravity', '9.80665', 'm s⁻²', 1],
+  ['mₑ', 'Electron mass', '9.1093837015e-31', 'kg', 0], ['mₚ', 'Proton mass', '1.67262192369e-27', 'kg', 0], ['mₙ', 'Neutron mass', '1.67492749804e-27', 'kg', 0], ['u', 'Atomic mass constant', '1.66053906660e-27', 'kg', 0],
+  ['ε₀', 'Vacuum electric permittivity', '8.8541878128e-12', 'F m⁻¹', 0], ['μ₀', 'Vacuum magnetic permeability', '1.25663706212e-6', 'N A⁻²', 0], ['kₑ', 'Coulomb constant', '8.9875517923e9', 'N m² C⁻²', 0],
+  ['α', 'Fine-structure constant', '7.2973525693e-3', '', 0], ['a₀', 'Bohr radius', '5.29177210903e-11', 'm', 0], ['R∞', 'Rydberg constant', '10973731.568160', 'm⁻¹', 0],
+  ['Φ₀', 'Magnetic flux quantum', '2.067833848e-15', 'Wb', 0], ['eV', 'Electronvolt', '1.602176634e-19', 'J', 1], ['atm', 'Standard atmosphere', '101325', 'Pa', 1],
+  ['π', 'Pi', String(Math.PI), '', 1], ['e', "Euler's number", String(Math.E), '', 1], ['φ', 'Golden ratio', String((1 + Math.sqrt(5)) / 2), '', 1], ['γ', 'Euler–Mascheroni constant', '0.5772156649015329', '', 1],
+];
+function constHtml(s) {
+  const [m, e] = s.toLowerCase().split('e');
+  return esc(m) + (e !== undefined ? `<span style="color:var(--muted)"> ×10</span><sup>${(+e < 0 ? '−' + (-e) : e)}</sup>` : '');
+}
+$('#ctab').innerHTML = '<thead><tr><th>Symbol</th><th>Quantity</th><th>Value</th><th>Unit</th></tr></thead><tbody>' +
+  CONST.map(([s, n, v, u, ex], i) => `<tr class="${ex && i < 24 ? 'ex' : ''}" data-ins="${esc(v.replace('e', 'E'))}" style="cursor:pointer" title="Insert into calculator"><td class="sym">${esc(s)}</td><td>${esc(n)}</td><td class="val">${i >= 24 ? esc(String(parseFloat(v).toPrecision(16))) : constHtml(v)}</td><td class="unit">${esc(u)}</td></tr>`).join('') + '</tbody>';
+
+/* ---------- init ---------- */
+renderPad(); renderModes(); renderShift(); renderHistory(); renderVars(); preview();
+gCompile(); lsGrid(); solveEq(); solvePoly(); calcDeriv(); calcInt();
+$$('#s-kind button').forEach(x => x.setAttribute('aria-pressed', x.dataset.k === 'sum')); calcSeries();
+$('#st-data').value = ST.d1; setStMode(1);
+cvFill(); bnRender();
+showTab(state.tab);
+setCaret(input.value.length);
+})();
+</script>
