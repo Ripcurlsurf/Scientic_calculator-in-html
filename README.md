@@ -1,5 +1,4 @@
-Here is an optimized, GitHub-ready README.md structured for maximum search engine discovery (GitHub search & Google ranking) and user conversion.
-Kepler SC-9 Scientific Calculator
+A fully featured html Scientific Calculator
 
     A standalone, high-performance browser scientific calculator and graphing suite built in a single static HTML file. Zero dependencies, no compilation, and no framework overhead.
 
