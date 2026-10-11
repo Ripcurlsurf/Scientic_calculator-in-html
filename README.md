@@ -1,133 +1,124 @@
-A fully featured html Scientific Calculator
+Web Calculators Suite
 
-    A standalone, high-performance browser scientific calculator and graphing suite built in a single static HTML file. Zero dependencies, no compilation, and no framework overhead.
+A collection of standalone, single-file HTML5 calculators engineered with clean vanilla JavaScript, modern CSS, and keyboard accessibility. No build tools, external runtimes, or package managers required.
+Included Applications
+1. Kepler SC-9 (Ripcurlsurf_calculator.html)
 
-Live Demo • Getting Started • Features • Syntax & Shortcuts • Math Engine Details
-Overview
+An advanced scientific and engineering workstation pairing an algebraic LCD calculator with a multi-pane tool bench.   
+HTML
 
-Kepler SC-9 is a self-contained scientific calculator engineered for students, engineers, and programmers. It runs entirely client-side out of a single file (kepler-calculator.html or index.html) using pure vanilla JavaScript, HTML5 Canvas, and modern CSS.
+    Algebraic Engine: Evaluates custom expressions, handles implicit multiplication (2π), brackets, variable assignments (e.g., r = 4), and stores historical entries.   
+    HTML
 
-    Zero-Setup Portability: Works offline straight out of the download. No Node.js, npm install, or bundlers required.
+    2D Function Plotter: Interactive canvas plotting up to 3 functions of x with zoom, pan, hover trace, and automatic root/intersection detection.   
+    HTML
 
-    Full Computational Suite: Includes multi-function 2D graphing, equation systems solving, calculus evaluation, linear regression, unit conversions, and 64-bit bitwise base-N tools.
+    Solvers: Root finding via bisection/golden-section search, polynomial root solving (real and complex), and linear system solving via Gaussian elimination (2×2 to 4×4).   
+    HTML
 
-    Accurate & Safe: Employs an AST-style recursive-descent parser without ever invoking unsafe evaluation methods like eval().
+    Calculus & Series: Numerical derivatives via five-point central differences, definite integration via adaptive Simpson's quadrature, and compensated summations/products (Σ / Π).   
+    HTML
 
-Features
-1. Core Calculator Engine
+    Statistics: 1-variable analysis (summary statistics, IQR, skewness, and SVG box plots) and 2-variable analysis (linear regression and scatter plots).   
+    HTML
 
-    Advanced Mathematical Functions: Trigonometric, inverse, and hyperbolic functions (sec, csc, cot); logarithms (ln, log10, log2, custom base); n-th roots, factorials (gamma function expansion for non-integers), permutations/combinations (nPr, nCr), modulo, LCM, and GCD.
+    Base-N & Bitwise: Two's complement integer math in HEX, DEC, OCT, and BIN across 8, 16, 32, and 64-bit word sizes with interactive bit flipping.   
+    HTML
 
-    Angle & Display Flexibility: Degree (DEG), Radian (RAD), and Gradian (GRAD) support. Output formatting includes standard, Fixed (FIX), Scientific (SCI), and Engineering (ENG) notation with customizable digit grouping.
+    Unit Converter & Physical Constants: Multi-category unit conversions alongside standard CODATA 2018 physical constants.   
+    HTML
 
-    Natural Expression Parsing: Supports implicit multiplication (e.g., 2π, 3(4+1), 2sin 30), auto-closing nested parentheses, and dynamic real-time result preview.
+2. Tape Calculator (standard-calculator.html)
 
-    Memory & Variables: Full storage register (MC, MR, M+, M-, MS), answer recall (Ans), and custom runtime variables (e.g., r = 4).
+A digital recreation of a classic desk office calculator (TC-12) featuring a printed audit paper tape.   
+HTML
 
-2. Specialized Tool Panels
-Panel	Core Capabilities
-Graphing	Interactive multi-curve plotting (f(x) up to 3 functions), coordinate tracing, auto-detection of roots, zeros, and curve intersections.
-Solver	Real root finding via interval analysis, complex polynomial root extraction, and systems of linear equations (2 to 4 variables).
-Calculus	Numerical derivatives at an arbitrary point (with tangent slope), adaptive definite integration, and finite series (∑ / ∏).
-Statistics	1-variable distributions (mean, median, standard deviation, quartiles, box plot); 2-variable linear regression (y=mx+b) with scatter plots.
-Base-N & Bitwise	8, 16, 32, and 64-bit integer views across Hex, Dec, Oct, and Bin. Interactive bit manipulation with AND, OR, XOR, NOT, and bitwise shifts.
-Unit Converter	Standardized conversion across 13 domains: Length, Mass, Temperature, Area, Volume, Speed, Time, Energy, Power, Pressure, Storage, Angle, and Frequency.
-Physical Constants	Precision-indexed CODATA values for physical, atomic, and universal constants ready for one-click formula insertion.
-Getting Started
-Local Use
+    Audit Paper Tape: Logs each operational step dynamically to an interactive virtual paper tape.   
+    HTML
 
-    Download or clone kepler-calculator.html:
+    Tape Recall: Click any previous total on the tape roll to pull it back into active calculation.   
+    HTML
+
+    Arithmetic & Quick Powers: Immediate-execution arithmetic, percentages, square roots, reciprocals, and squared values.   
+    HTML
+
+    State Persistence: Saves tape entries locally via localStorage.   
+    HTML
+
+Quick Start
+
+Both calculators are completely self-contained single-page applications.
+
+    Clone or download the repository:
     Bash
 
-    git clone https://github.com/your-username/repository-name.git
+    git clone https://github.com/your-username/your-repo-name.git
+    cd your-repo-name
 
-    Double-click kepler-calculator.html to open it directly in any web browser.
+    Open either file directly in any modern browser:
 
-Deploy to GitHub Pages (Free Hosting)
+        Double-click Ripcurlsurf_calculator.html or standard-calculator.html.
 
-    Rename kepler-calculator.html to index.html.
+        Or serve locally via python:
+        Bash
 
-    Push your commit to GitHub:
-    Bash
+        python3 -m http.server 8000
 
-    git add index.html
-    git commit -m "feat: setup GitHub Pages entrypoint"
-    git push origin main
+Keyboard Shortcuts
+Kepler SC-9
 
-    In your GitHub repository, open Settings → Pages.
+    Evaluate: Enter or =
 
-    Set Source to Deploy from a branch, choose your branch (e.g., main), set the folder to / (root), and click Save.
+       
+    HTML
 
-    Your calculator is live at https://<your-username>.github.io/<repository-name>/.
+    Clear: Esc
 
-Usage and Syntax
-Mathematical Input Conventions
-Expression	Evaluates To	Parsing Logic
-2π, 3(4+1)	2×π, 3×5	Implicit multiplication binds tighter than division (1/2π = 2π1​).
--2^2	-4	Exponentiation has higher precedence than unary negation.
-2^3^2	512	Right-associative exponent chains: 2(32)=29.
-6.022E23	6.022×1023	Standard scientific entry (accessible via EXP key).
-sin(30°)	0.5	Suffix ° forces degree evaluation regardless of global angle mode.
-log(8, 2)	3	Multi-parameter logarithm: log(value, base).
-root(27, 3)	3	Arbitrary radical: root(value, n).
-17 mod 5	2	Remainder with sign matched to the divisor.
-Keyboard Navigation
+       
+    HTML
 
-    Enter / =: Compute expression
+    History Navigation: ↑ / ↓
 
-    Esc: Clear input line
+       
+    HTML
 
-    ↑ / ↓: Traverse expression history
+    Operators: +, -, *, /, ^
 
-    + - * / ^: Apply operator to previous answer (Ans) automatically
+       
+    HTML
 
-Technical Architecture
+Tape Calculator
 
-    Zero Build Pipeline: No Babel, Webpack, Vite, or external dependencies. Plain standard ES6+ JavaScript.
+    Digits / Decimal: 0–9, .
 
-    Execution Safety: Pure algorithmic tokenization and recursive-descent expression parsing. Completely avoids eval() or Function() execution strings.
+       
+    HTML
 
-    Numerical Methods Implemented:
+    Basic Operators: +, -, *, /, %
 
-        Roots: Hybrid bisection and golden-section search algorithms.
+       
+    HTML
 
-        Polynomials: Durand–Kerner method for simultaneous roots in the complex plane.
+    Equals / Total: Enter or =
 
-        Linear Algebra: Gaussian elimination with partial pivoting.
+       
+    HTML
 
-        Calculus: 5-point stencil central difference for derivatives; adaptive Simpson’s quadrature for definite integrals.
+    Clear Entry / All Clear: Delete (C), Esc (AC)   
+    HTML
 
-    Data Persistence: User history, active variables, and display configurations are automatically stored across sessions via standard localStorage.
+    Delete Digit: Backspace
 
-    Theme Support: Native CSS custom properties adapt automatically to dark and light OS color schemes.
+       
+    HTML
 
-Browser Compatibility
+    Math Functions: r (x​), q (x2), i (1/x)   
+    HTML
 
-Compatible with all modern standards-compliant web browsers on desktop, tablet, and mobile:
+License
 
-    Google Chrome (and Chromium variants)
+This project is made available for free non-commercial use only.
 
-    Mozilla Firefox
+    Non-Commercial Restriction: You may freely download, run, modify, and share this software for personal, academic, or non-commercial purposes.
 
-    Apple Safari
-
-    Microsoft Edge
-
-Contributing & License
-
-Pull requests, feature suggestions, and bug reports are welcome. Feel free to open an issue to discuss proposed additions.
-
-Distributed under the MIT License. See the LICENSE file for more information.
-Recommended GitHub Repository Settings (For Search Discoverability)
-
-To maximize discoverability in GitHub search and Google:
-
-    Repository Description:
-
-        "A single-file scientific, graphing, and calculus calculator in pure vanilla JavaScript. Zero dependencies, offline-ready, and lightweight."
-
-    Repository Topics / Tags (Add these under the "About" settings gear):
-
-    scientific-calculator, calculator, graphing-calculator, vanilla-js, single-file, math-evaluator, calculus-solver, numerical-methods, github-pages, offline-first
-
-    This project is open-source under the MIT License.
+    Commercial use, redistribution for profit, or bundling within commercial products and services is strictly prohibited without explicit prior written authorization from the author.
